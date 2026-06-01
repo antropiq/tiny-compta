@@ -1,0 +1,17 @@
+.status-bar {
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.status-left {
+  font-size: 0.875rem;
+}
+
+.status-label {
+  font-size: 0.875rem;
+}

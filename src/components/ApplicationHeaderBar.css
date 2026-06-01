@@ -1,0 +1,21 @@
+.brand-text {
+  font-weight: bold !important;
+  flex-shrink: 0;
+}
+
+.header-center-container {
+  flex-grow: 1;
+  display: flex;
+  justify-content: center;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.language-selector {
+  color: inherit;
+  min-width: 9rem;
+}

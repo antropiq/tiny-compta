@@ -1,0 +1,64 @@
+{
+  "header": {
+    "brand": "Tiny Compta",
+    "languages": {
+      "fr": "Français",
+      "en": "Anglais"
+    }
+  },
+  "common": {
+    "cancel": "Annuler",
+    "confirm": "Confirmer",
+    "confirm_title": "Confirmer",
+    "save": "Enregistrer"
+  },
+  "account": {
+    "create": "Créer un compte",
+    "edit": "Modifier le compte",
+    "delete": "Supprimer le compte",
+    "delete_confirmation": "Êtes-vous sûr de vouloir supprimer ce compte ?",
+    "label": "Nom du compte",
+    "select": "Sélectionner un compte"
+  },
+  "transaction": {
+    "title": "Transactions",
+    "create": "Créer une transaction",
+    "edit": "Modifier la transaction",
+    "clone": "Cloner la transaction",
+    "no_transactions": "Aucune transaction trouvée.",
+    "dueDate": "Date d'échéance",
+    "label": "Libellé",
+    "description": "Description",
+    "amount": "Montant",
+    "actions": "Actions",
+    "clone": "Cloner",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "delete_confirmation": "Êtes-vous sûr de vouloir supprimer cette transaction ?",
+    "balance_status": "Solde du compte au {{date}}: {{amount}} {{currency}}"
+  },
+  "export": {
+    "title": "Exportation des transactions",
+    "format": "Format d'exportation",
+    "json": "Exportation en JSON",
+    "csv": "Exportation en CSV",
+    "startDate": "Date de début",
+    "endDate": "Date de fin",
+    "delimiter": "Délimiteur de chaîne",
+    "separator": "Séparateur de champ",
+    "export": "Exporter",
+    "success": "{{count}} transactions ont été exportées avec succès dans le fichier {{filename}}",
+    "error": "Une erreur s'est produite lors de l'exportation"
+  },
+  "import": {
+    "title": "Importation des transactions",
+    "selectFile": "Sélectionnez un fichier CSV ou JSON à importer",
+    "browseFile": "Parcourir le fichier",
+    "loading": "...",
+    "import": "Importer",
+    "success": "{{count}} transactions ont été importées dans le compte {{accountLabel}}",
+    "error_invalid_format": "Le contenu JSON ne suit pas la bonne structure",
+    "error_invalid_data": "Données invalides dans une ou plusieurs transactions. Importation annulée.",
+    "error_file_read": "Échec de la lecture du fichier"
+  }
+}
