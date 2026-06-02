@@ -57,7 +57,7 @@ const ImportTransactionDialog: React.FC<ImportTransactionDialogProps> = ({
               throw new Error('Invalid JSON structure');
             }
             transactions = json.transactions;
-          } catch (err) {
+          } catch {
             onError(t('import.error_invalid_format'));
             setIsImporting(false);
             return;
@@ -142,7 +142,7 @@ const ImportTransactionDialog: React.FC<ImportTransactionDialogProps> = ({
     const separator = firstLine.includes(';') ? ';' : ',';
     
     const headers = firstLine.split(separator).map(h => h.trim().toLowerCase().replace(/^"|"$/g, ''));
-    const results: any[] = [];
+    const results: Partial<Transaction>[] = [];
 
     for (let i = 1; i < lines.length; i++) {
       const line = lines[i];
@@ -164,7 +164,7 @@ const ImportTransactionDialog: React.FC<ImportTransactionDialogProps> = ({
       }
       values.push(current.trim());
 
-      const obj: any = {};
+      const obj: Record<string, string> = {};
       headers.forEach((header, index) => {
         let val = values[index] || '';
         // Remove outer quotes if they exist
@@ -172,7 +172,7 @@ const ImportTransactionDialog: React.FC<ImportTransactionDialogProps> = ({
         const mappedKey = headerMap[header] || header;
         obj[mappedKey] = val;
       });
-      results.push(obj);
+      results.push(obj as Partial<Transaction>);
     }
     return results;
   };

@@ -46,7 +46,7 @@ describe('AccountList', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
     await i18n.changeLanguage('en');
-    (dbService.getAllAccounts as any).mockResolvedValue(mockAccounts);
+    vi.mocked(dbService.getAllAccounts).mockResolvedValue(mockAccounts);
   });
 
   it('loads and displays accounts in the autocomplete', async () => {
@@ -100,7 +100,7 @@ describe('AccountList', () => {
   });
 
   it('disables edit and delete buttons when no accounts are available', async () => {
-    (dbService.getAllAccounts as any).mockResolvedValue([]);
+    vi.mocked(dbService.getAllAccounts).mockResolvedValue([]);
     renderWithProviders(<AccountList />);
 
     await waitFor(() => {

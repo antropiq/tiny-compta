@@ -9,6 +9,7 @@ import ExportTransactionDialog from './ExportTransactionDialog';
 import { useAccount } from '../hooks/useAccount';
 import type { Transaction } from '../types/transaction';
 import dayjs from 'dayjs';
+import type { AccountContextType } from '../contexts/AccountContext';
 
 vi.mock('../hooks/useAccount', () => ({
   useAccount: vi.fn(),
@@ -39,10 +40,13 @@ describe('ExportTransactionDialog', () => {
     i18n.changeLanguage('en');
     vi.mocked(useAccount).mockReturnValue({
       selectedAccount: { id: 'acc1', label: 'Test Account' },
+      setSelectedAccount: vi.fn(),
       selectedDate: dayjs('2023-02-01'),
       setSelectedDate: vi.fn(),
+      transactionsVersion: 0,
       setTransactionsVersion: vi.fn(),
-    } as any);
+      isInitializing: false,
+    } as AccountContextType);
   });
 
   it('renders correctly', () => {

@@ -57,23 +57,31 @@ describe('TransactionEditionArea', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
     await i18n.changeLanguage('en');
-    (useAccount as any).mockReturnValue({ 
+    vi.mocked(useAccount).mockReturnValue({
       selectedAccount: mockAccount,
       selectedDate: dayjs(),
       setSelectedDate: vi.fn(),
       transactionsVersion: 0,
       setTransactionsVersion: vi.fn(),
+      setSelectedAccount: function (): void | Promise<void> {
+        throw new Error('Function not implemented.');
+      },
+      isInitializing: false
     });
-    (dbService.getTransactionsByAccountId as any).mockResolvedValue(mockTransactions);
+    vi.mocked(dbService.getTransactionsByAccountId).mockResolvedValue(mockTransactions);
   });
 
   it('shows "select account" message when no account is selected', async () => {
-    (useAccount as any).mockReturnValue({ 
+    vi.mocked(useAccount).mockReturnValue({
       selectedAccount: null,
       selectedDate: dayjs(),
       setSelectedDate: vi.fn(),
       transactionsVersion: 0,
       setTransactionsVersion: vi.fn(),
+      setSelectedAccount: function (): void | Promise<void> {
+        throw new Error('Function not implemented.');
+      },
+      isInitializing: false
     });
     renderWithProviders(<TransactionEditionArea />);
 
@@ -150,7 +158,7 @@ describe('TransactionEditionArea', () => {
     });
 
     // Prepare mock to return only the second transaction after deletion
-    (dbService.getTransactionsByAccountId as any).mockResolvedValue([mockTransactions[1]]);
+    vi.mocked(dbService.getTransactionsByAccountId).mockResolvedValue([mockTransactions[1]]);
 
     const deleteButtons = screen.getAllByRole('button', { name: /delete transaction/i });
     fireEvent.click(deleteButtons[0]);
@@ -192,7 +200,7 @@ describe('TransactionEditionArea', () => {
       },
     ];
 
-    (dbService.getTransactionsByAccountId as any).mockResolvedValue(unsortedTransactions);
+    vi.mocked(dbService.getTransactionsByAccountId).mockResolvedValue(unsortedTransactions);
     renderWithProviders(<TransactionEditionArea />);
 
     await waitFor(() => {
@@ -200,7 +208,7 @@ describe('TransactionEditionArea', () => {
     });
 
     // Find all rows that contain transaction labels
-    const transactionRows = screen.getAllByRole('row').filter(row => 
+    const transactionRows = screen.getAllByRole('row').filter(row =>
       row.textContent?.includes('Transaction ')
     );
 
