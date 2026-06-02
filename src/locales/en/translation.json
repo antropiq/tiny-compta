@@ -25,6 +25,8 @@
     "create": "Create Transaction",
     "edit": "Edit Transaction",
     "clone": "Clone Transaction",
+    "search": "Search",
+    "filter": "Filter",
     "no_transactions": "No transactions found.",
     "dueDate": "Due Date",
     "label": "Label",

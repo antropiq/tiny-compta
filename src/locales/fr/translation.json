@@ -25,6 +25,8 @@
     "create": "Créer une transaction",
     "edit": "Modifier la transaction",
     "clone": "Cloner la transaction",
+    "search": "Rechercher",
+    "filter": "Filtrer",
     "no_transactions": "Aucune transaction trouvée.",
     "dueDate": "Date d'échéance",
     "label": "Libellé",
