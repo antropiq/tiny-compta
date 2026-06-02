@@ -9,6 +9,7 @@ import { useAccount } from '../hooks/useAccount';
 import { dbService } from '../services/db';
 import TransactionEditor from './TransactionEditor';
 import type { TransactionEditorMode } from './TransactionEditor';
+import TransactionToolbar from './TransactionToolbar';
 import ConfirmDialog from './ConfirmDialog';
 import ExportTransactionDialog from './ExportTransactionDialog';
 import ImportTransactionDialog from './ImportTransactionDialog';
@@ -137,16 +138,6 @@ const TransactionEditionArea: React.FC = () => {
   return (
     <Box className="transaction-edition-area">
       <Paper className="left-container" elevation={0} variant="outlined" >
-        <Box className="add-transaction-button">
-          <Button
-            variant="contained"
-            // fullWidth
-            onClick={handleAddTransaction}
-            disabled={!selectedAccount}
-          >
-            {t('transaction.create')}
-          </Button>
-        </Box>
         <Box className="calendar-container">
           <DateCalendar
             value={selectedDate}
@@ -158,7 +149,7 @@ const TransactionEditionArea: React.FC = () => {
           />
         </Box>
         <Box className="logo-container">
-           <Logo color={primaryColor} size={200} />
+           <Logo color={primaryColor} size={150} />
         </Box>
         <Box sx={{ display: 'flex', justifyContent: 'center' }}>
           <Tooltip title={t('export.title')}>
@@ -175,6 +166,7 @@ const TransactionEditionArea: React.FC = () => {
       </Paper>
 
       <Paper className="right-container" elevation={0} variant="outlined">
+        <TransactionToolbar onAddTransaction={handleAddTransaction} disabled={!selectedAccount} />
         <Box className="table-container">
           <Table size="small" sx={{ fontSize: '0.875rem' }} stickyHeader>
               <TableHead>
