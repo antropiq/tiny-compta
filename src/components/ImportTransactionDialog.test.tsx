@@ -9,6 +9,7 @@ import ImportTransactionDialog from './ImportTransactionDialog';
 import { useAccount } from '../hooks/useAccount';
 import { dbService } from '../services/db';
 import dayjs from 'dayjs';
+import type { AccountContextType } from '../contexts/AccountContext';
 
 vi.mock('../hooks/useAccount', () => ({
   useAccount: vi.fn(),
@@ -45,7 +46,7 @@ describe('ImportTransactionDialog', () => {
       selectedDate: dayjs('2023-02-01'),
       setSelectedDate: vi.fn(),
       setTransactionsVersion: vi.fn(),
-    } as any);
+    } as unknown as AccountContextType);
   });
 
   const defaultProps = {
@@ -517,7 +518,7 @@ describe('ImportTransactionDialog', () => {
         selectedDate: dayjs('2023-02-01'),
         setSelectedDate: vi.fn(),
         setTransactionsVersion: vi.fn(),
-      } as any);
+      } as unknown as AccountContextType);
 
       const jsonContent = JSON.stringify({
         transactions: [
@@ -546,7 +547,7 @@ describe('ImportTransactionDialog', () => {
         selectedDate: dayjs('2023-02-01'),
         setSelectedDate: vi.fn(),
         setTransactionsVersion: vi.fn(),
-      } as any);
+      } as unknown as AccountContextType);
 
       const jsonContent = JSON.stringify({
         transactions: [

@@ -3,6 +3,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { useBalance } from './useBalance';
 import { useAccount } from './useAccount';
 import { dbService } from '../services/db';
+import type { AccountContextType } from '../contexts/AccountContext';
 import dayjs from 'dayjs';
 
 vi.mock('./useAccount', () => ({
@@ -24,13 +25,17 @@ describe('useBalance', () => {
       { id: 'tx-3', accountId: 'acc-1', label: 'T3', amount: 20, dueDate: '2024-02-01' }, // outside range if selectedDate is 2024-01-15
     ];
 
-    (useAccount as any).mockReturnValue({
+    vi.mocked(useAccount).mockReturnValue({
       selectedAccount: mockAccount,
       selectedDate: dayjs('2024-01-15'),
       transactionsVersion: 0,
-    });
+      setSelectedAccount: vi.fn(),
+      setSelectedDate: vi.fn(),
+      setTransactionsVersion: vi.fn(),
+      isInitializing: false,
+    } as AccountContextType);
 
-    (dbService.getTransactionsByAccountId as any).mockResolvedValue(mockTransactions);
+    vi.mocked(dbService.getTransactionsByAccountId).mockResolvedValue(mockTransactions);
 
     const { result } = renderHook(() => useBalance());
 
@@ -41,11 +46,15 @@ describe('useBalance', () => {
   });
 
   it('returns 0 if no account is selected', async () => {
-    (useAccount as any).mockReturnValue({
+    vi.mocked(useAccount).mockReturnValue({
       selectedAccount: null,
       selectedDate: dayjs(),
       transactionsVersion: 0,
-    });
+      setSelectedAccount: vi.fn(),
+      setSelectedDate: vi.fn(),
+      setTransactionsVersion: vi.fn(),
+      isInitializing: false,
+    } as AccountContextType);
 
     const { result } = renderHook(() => useBalance());
 
@@ -57,13 +66,17 @@ describe('useBalance', () => {
 
   it('returns 0 if no transactions are found', async () => {
     const mockAccount = { id: 'acc-1', label: 'Test Account' };
-    (useAccount as any).mockReturnValue({
+    vi.mocked(useAccount).mockReturnValue({
       selectedAccount: mockAccount,
       selectedDate: dayjs(),
       transactionsVersion: 0,
-    });
+      setSelectedAccount: vi.fn(),
+      setSelectedDate: vi.fn(),
+      setTransactionsVersion: vi.fn(),
+      isInitializing: false,
+    } as AccountContextType);
 
-    (dbService.getTransactionsByAccountId as any).mockResolvedValue([]);
+    vi.mocked(dbService.getTransactionsByAccountId).mockResolvedValue([]);
 
     const { result } = renderHook(() => useBalance());
 
