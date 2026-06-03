@@ -163,4 +163,5 @@ describe('AccountList', () => {
 
     expect(await screen.findByText(/are you sure you want to delete this account\?/i)).toBeInTheDocument();
   });
-});
+
+ });
