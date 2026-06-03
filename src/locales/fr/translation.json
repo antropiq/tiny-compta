@@ -10,7 +10,8 @@
     "cancel": "Annuler",
     "confirm": "Confirmer",
     "confirm_title": "Confirmer",
-    "save": "Enregistrer"
+    "save": "Enregistrer",
+    "close": "Fermer"
   },
   "account": {
     "create": "Créer un compte",
@@ -27,14 +28,13 @@
     "clone": "Cloner la transaction",
     "search": "Rechercher",
     "filter": "Filtrer",
+    "monthly_view": "Ne pas afficher les anciennes transactions",
     "no_transactions": "Aucune transaction trouvée.",
     "dueDate": "Date d'échéance",
     "label": "Libellé",
     "description": "Description",
     "amount": "Montant",
     "actions": "Actions",
-    "clone": "Cloner",
-    "edit": "Modifier",
     "delete": "Supprimer",
     "delete_confirmation": "Êtes-vous sûr de vouloir supprimer cette transaction ?",
     "balance_status": "Solde du compte au {{date}}: {{amount}} {{currency}}"

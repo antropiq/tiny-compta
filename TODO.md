@@ -48,3 +48,4 @@ export type Transaction = {
 # DONE SECTION GOES BELLOW
 
 DONE - Enhancement - transaction toolbar - left-container vertical viewport.
+DONE - Transaction list visible items

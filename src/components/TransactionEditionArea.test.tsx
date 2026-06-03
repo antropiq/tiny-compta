@@ -42,7 +42,7 @@ describe('TransactionEditionArea', () => {
       label: 'Transaction 1',
       description: 'Desc 1',
       amount: 10,
-      dueDate: '2026-01-01',
+      dueDate: '2026-06-01',
     },
     {
       id: 'tx-2',
@@ -50,7 +50,7 @@ describe('TransactionEditionArea', () => {
       label: 'Transaction 2',
       description: 'Desc 2',
       amount: 20,
-      dueDate: '2026-01-02',
+      dueDate: '2026-06-02',
     },
   ];
 
@@ -63,9 +63,7 @@ describe('TransactionEditionArea', () => {
       setSelectedDate: vi.fn(),
       transactionsVersion: 0,
       setTransactionsVersion: vi.fn(),
-      setSelectedAccount: function (): void | Promise<void> {
-        throw new Error('Function not implemented.');
-      },
+      setSelectedAccount: vi.fn(),
       isInitializing: false
     });
     vi.mocked(dbService.getTransactionsByAccountId).mockResolvedValue(mockTransactions);
@@ -78,9 +76,7 @@ describe('TransactionEditionArea', () => {
       setSelectedDate: vi.fn(),
       transactionsVersion: 0,
       setTransactionsVersion: vi.fn(),
-      setSelectedAccount: function (): void | Promise<void> {
-        throw new Error('Function not implemented.');
-      },
+      setSelectedAccount: vi.fn(),
       isInitializing: false
     });
     renderWithProviders(<TransactionEditionArea />);
@@ -180,7 +176,7 @@ describe('TransactionEditionArea', () => {
         label: 'Transaction 2',
         description: 'Desc 2',
         amount: 20,
-        dueDate: '2026-01-02',
+        dueDate: '2026-06-02',
       },
       {
         id: 'tx-1',
@@ -188,7 +184,7 @@ describe('TransactionEditionArea', () => {
         label: 'Transaction 1',
         description: 'Desc 1',
         amount: 10,
-        dueDate: '2026-01-01',
+        dueDate: '2026-06-01',
       },
       {
         id: 'tx-3',
@@ -196,7 +192,7 @@ describe('TransactionEditionArea', () => {
         label: 'Transaction 3',
         description: 'Desc 3',
         amount: 30,
-        dueDate: '2025-12-31',
+        dueDate: '2026-05-28',
       },
     ];
 
@@ -216,5 +212,33 @@ describe('TransactionEditionArea', () => {
     expect(transactionRows[0]).toHaveTextContent('Transaction 3');
     expect(transactionRows[1]).toHaveTextContent('Transaction 1');
     expect(transactionRows[2]).toHaveTextContent('Transaction 2');
+  });
+
+  it('applies the monthly view filter by default', async () => {
+    const transactionsWithOld: Transaction[] = [
+      {
+        id: 'tx-new',
+        accountId: 'account-1',
+        label: 'New Transaction',
+        description: 'New',
+        amount: 10,
+        dueDate: '2026-06-01',
+      },
+      {
+        id: 'tx-old',
+        accountId: 'account-1',
+        label: 'Old Transaction',
+        description: 'Old',
+        amount: 10,
+        dueDate: '2026-01-01',
+      },
+    ];
+    vi.mocked(dbService.getTransactionsByAccountId).mockResolvedValue(transactionsWithOld);
+    renderWithProviders(<TransactionEditionArea />);
+
+    await waitFor(() => {
+      expect(screen.getByText('New Transaction')).toBeInTheDocument();
+    });
+    expect(screen.queryByText('Old Transaction')).not.toBeInTheDocument();
   });
 });
