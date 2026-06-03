@@ -5,10 +5,11 @@ import { useTranslation } from 'react-i18next';
 
 interface TransactionToolbarProps {
   onAddTransaction: () => void;
+  onFilterClick?: () => void;
   disabled?: boolean;
 }
 
-const TransactionToolbar: React.FC<TransactionToolbarProps> = ({ onAddTransaction, disabled }) => {
+const TransactionToolbar: React.FC<TransactionToolbarProps> = ({ onAddTransaction, onFilterClick, disabled }) => {
   const { t } = useTranslation();
 
   return (
@@ -31,7 +32,7 @@ const TransactionToolbar: React.FC<TransactionToolbarProps> = ({ onAddTransactio
         </IconButton>
       </Tooltip>
       <Tooltip title={t('transaction.filter')}>
-        <IconButton color="inherit">
+        <IconButton color="inherit" onClick={onFilterClick}>
           <FilterList />
         </IconButton>
       </Tooltip>

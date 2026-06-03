@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Box, Paper, Table, TableBody, TableCell, TableHead, TableRow, IconButton, Tooltip, Snackbar, Alert, useTheme } from '@mui/material';
 import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
 import { ContentCopy, Edit, Delete, Download, Upload } from '@mui/icons-material';
@@ -13,57 +13,88 @@ import TransactionToolbar from './TransactionToolbar';
 import ConfirmDialog from './ConfirmDialog';
 import ExportTransactionDialog from './ExportTransactionDialog';
 import ImportTransactionDialog from './ImportTransactionDialog';
+import TransactionFilterDialog from './TransactionFilterDialog';
+import { monthlyViewFilter } from '../filters';
+import type { Filterable } from '../types/filter';
 import './TransactionEditionArea.css';
 import Logo from './logo';
 
 const TransactionEditionArea: React.FC = () => {
   const { t } = useTranslation();
-  const { selectedAccount, selectedDate, setSelectedDate, setTransactionsVersion } = useAccount();
+  const { selectedAccount, selectedDate, setSelectedDate, setTransactionsVersion, transactionsVersion } = useAccount();
   const theme = useTheme();
   const primaryColor = theme.palette?.primary?.main || "#D4AF37";
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
 
-  // Editor state
+  const [databaseTransactions, setDatabaseTransactions] = useState<Transaction[]>([]);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editorMode, setEditorMode] = useState<TransactionEditorMode>('create');
   const [transactionToEdit, setTransactionToEdit] = useState<Transaction | undefined>(undefined);
-
-  // Confirm dialog state
+  const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
+  const [filters, setFilters] = useState<Filterable[]>([monthlyViewFilter]);
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
   const [transactionToDelete, setTransactionToDelete] = useState<Transaction | undefined>(undefined);
   const [confirmMessage, setConfirmMessage] = useState('');
-
-  // Export/Import state
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
-  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
+  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' | 'warning' | 'info' }>({
     open: false,
     message: '',
-    severity: 'success'
+    severity: 'info',
   });
 
-  const handleOpenSnackbar = (message: string, severity: 'success' | 'error') => {
-    setSnackbar({ open: true, message, severity });
-  };
-
-  const handleCloseSnackbar = () => {
-    setSnackbar({ ...snackbar, open: false });
-  };
-
-  const loadTransactions = useCallback(async () => {
-    if (selectedAccount) {
-      const txs = await dbService.getTransactionsByAccountId(selectedAccount.id);
-      const sortedTxs = [...txs].sort((a, b) => dayjs(a.dueDate).valueOf() - dayjs(b.dueDate).valueOf());
-      setTransactions(sortedTxs);
-    } else {
-      setTransactions([]);
+  const fetchTransactions = useCallback(async () => {
+    if (!selectedAccount) {
+      return [];
     }
+    return await dbService.getTransactionsByAccountId(selectedAccount.id);
   }, [selectedAccount]);
 
+  const refreshTransactions = useCallback(async () => {
+    const transactions = await fetchTransactions();
+    setDatabaseTransactions(transactions);
+  }, [fetchTransactions]);
+
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    loadTransactions();
-  }, [loadTransactions]);
+    let isMounted = true;
+    fetchTransactions().then((transactions) => {
+      if (isMounted) {
+        setDatabaseTransactions(transactions);
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, [fetchTransactions, transactionsVersion]);
+
+  const viewableTransactions = useMemo(() => {
+    if (databaseTransactions.length === 0) {
+      return [];
+    }
+    filters.forEach(f => f.setup());
+    let filtered = [...databaseTransactions];
+    filters.forEach(f => {
+      if (f.active) {
+        filtered = f.apply(filtered);
+      }
+    });
+    return filtered.sort((a, b) => dayjs(a.dueDate).diff(dayjs(b.dueDate)));
+  }, [databaseTransactions, filters]);
+
+  const handleFilterChange = (filter: Filterable) => {
+    setFilters(prevFilters => {
+      const index = prevFilters.findIndex(f => f === filter);
+      if (index !== -1) {
+        const newFilters = [...prevFilters];
+        newFilters[index] = filter;
+        return newFilters;
+      }
+      return prevFilters;
+    });
+  };
+
+  const handleOpenFilterDialog = () => {
+    setIsFilterDialogOpen(true);
+  };
 
   const handleAddTransaction = () => {
     if (!selectedAccount) return;
@@ -91,7 +122,7 @@ const TransactionEditionArea: React.FC = () => {
       await dbService.updateTransaction(newTransaction);
     }
     setTransactionsVersion(v => v + 1);
-    await loadTransactions();
+    await refreshTransactions();
   };
 
   const handleDeleteTransaction = (transaction: Transaction) => {
@@ -104,7 +135,7 @@ const TransactionEditionArea: React.FC = () => {
     if (transactionToDelete) {
       await dbService.deleteTransaction(transactionToDelete.id);
       setTransactionsVersion(v => v + 1);
-      await loadTransactions();
+      await refreshTransactions();
     }
     setTransactionToDelete(undefined);
     setIsConfirmDialogOpen(false);
@@ -121,18 +152,26 @@ const TransactionEditionArea: React.FC = () => {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
 
-    handleOpenSnackbar(t('export.success', { count: transactions.length, filename }), 'success');
+    handleOpenSnackbar(t('export.success', { count: databaseTransactions.length, filename }), 'success');
     setIsExportDialogOpen(false);
   };
 
   const handleImportSuccess = (count: number, accountLabel: string) => {
     handleOpenSnackbar(t('import.success', { count, accountLabel }), 'success');
     setTransactionsVersion(v => v + 1);
-    loadTransactions();
+    refreshTransactions();
   };
 
   const handleImportError = (message: string) => {
     handleOpenSnackbar(message, 'error');
+  };
+
+  const handleCloseSnackbar = () => {
+    setSnackbar(prev => ({ ...prev, open: false }));
+  };
+
+  const handleOpenSnackbar = (message: string, severity: 'success' | 'error' | 'warning' | 'info') => {
+    setSnackbar({ open: true, message, severity });
   };
 
   return (
@@ -166,7 +205,7 @@ const TransactionEditionArea: React.FC = () => {
       </Paper>
 
       <Paper className="right-container" elevation={0} variant="outlined">
-        <TransactionToolbar onAddTransaction={handleAddTransaction} disabled={!selectedAccount} />
+        <TransactionToolbar onAddTransaction={handleAddTransaction} onFilterClick={handleOpenFilterDialog} disabled={!selectedAccount} />
         <Box className="table-container">
           <Table size="small" sx={{ fontSize: '0.875rem' }} stickyHeader>
               <TableHead>
@@ -179,7 +218,7 @@ const TransactionEditionArea: React.FC = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {transactions.map((transaction) => (
+                {viewableTransactions.map((transaction) => (
                   <TableRow key={transaction.id}>
                     <TableCell>{dayjs(transaction.dueDate).format('DD/MM/YYYY')}</TableCell>
                     <TableCell>{transaction.label}</TableCell>
@@ -192,7 +231,7 @@ const TransactionEditionArea: React.FC = () => {
                     </TableCell>
                   </TableRow>
                 ))}
-                {transactions.length === 0 && (
+                {viewableTransactions.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={5} align="center">
                       {selectedAccount ? t('transaction.no_transactions') : t('account.select')}
@@ -223,7 +262,7 @@ const TransactionEditionArea: React.FC = () => {
       <ExportTransactionDialog
         open={isExportDialogOpen}
         onClose={() => setIsExportDialogOpen(false)}
-        transactions={transactions}
+        transactions={databaseTransactions}
         onExport={handleExport}
       />
 
@@ -232,6 +271,13 @@ const TransactionEditionArea: React.FC = () => {
         onClose={() => setIsImportDialogOpen(false)}
         onImportSuccess={handleImportSuccess}
         onError={handleImportError}
+      />
+
+      <TransactionFilterDialog
+        open={isFilterDialogOpen}
+        onClose={() => setIsFilterDialogOpen(false)}
+        filters={filters}
+        onFilterChange={handleFilterChange}
       />
 
       <Snackbar
