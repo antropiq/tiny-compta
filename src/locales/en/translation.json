@@ -19,7 +19,10 @@
     "delete": "Delete Account",
     "delete_confirmation": "Are you sure you want to delete this account?",
     "label": "Account Label",
-    "select": "Select Account"
+    "select": "Select Account",
+    "clearText": "Clear",
+    "closeText": "Close",
+    "noOptionsText": "No options"
   },
   "transaction": {
     "title": "Transactions",

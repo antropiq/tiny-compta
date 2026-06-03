@@ -19,7 +19,10 @@
     "delete": "Supprimer le compte",
     "delete_confirmation": "Êtes-vous sûr de vouloir supprimer ce compte ?",
     "label": "Nom du compte",
-    "select": "Sélectionner un compte"
+    "select": "Sélectionner un compte",
+    "clearText": "Effacer",
+    "closeText": "Fermer",
+    "noOptionsText": "Aucune option"
   },
   "transaction": {
     "title": "Transactions",

@@ -84,6 +84,9 @@ const AccountList: React.FC = () => {
         isOptionEqualToValue={(option, value) => option.id === value.id}
         value={selectedAccount}
         onChange={(_, newValue) => setSelectedAccount(newValue)}
+        clearText={t('account.clearText')}
+        closeText={t('account.closeText')}
+        noOptionsText={t('account.noOptionsText')}
         renderInput={(params) => (
           <TextField {...params} size="small" placeholder={t('account.select')} />
         )}
