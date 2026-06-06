@@ -211,6 +211,7 @@ const TransactionEditionArea: React.FC = () => {
           <Table size="small" sx={{ fontSize: '0.875rem' }} stickyHeader>
               <TableHead>
                 <TableRow>
+                  <TableCell className="indicator-cell-header" />
                   <TableCell>{t('transaction.dueDate')}</TableCell>
                   <TableCell>{t('transaction.label')}</TableCell>
                   <TableCell>{t('transaction.description')}</TableCell>
@@ -219,22 +220,26 @@ const TransactionEditionArea: React.FC = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {viewableTransactions.map((transaction) => (
-                  <TableRow key={transaction.id}>
-                    <TableCell>{dayjs(transaction.dueDate).format('DD/MM/YYYY')}</TableCell>
-                    <TableCell>{transaction.label}</TableCell>
-                    <TableCell>{transaction.description}</TableCell>
-                    <TableCell align="right">{FormatUtils.currency(transaction.amount)}</TableCell>
-                    <TableCell align="right">
-                      <IconButton size="small" onClick={() => handleCloneTransaction(transaction)} aria-label="clone transaction"><ContentCopy fontSize="small" /></IconButton>
-                      <IconButton size="small" onClick={() => handleEditTransaction(transaction)} aria-label="edit transaction"><Edit fontSize="small" /></IconButton>
-                      <IconButton size="small" onClick={() => handleDeleteTransaction(transaction)} aria-label="delete transaction"><Delete fontSize="small" /></IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {viewableTransactions.map((transaction) => {
+                  const isToday = dayjs(transaction.dueDate).isSame(dayjs(), 'day');
+                  return (
+                    <TableRow key={transaction.id} className={transaction.amount > 0 ? 'row-positive' : 'row-default'}>
+                      <TableCell className={`indicator-cell ${isToday ? 'indicator-cell-today' : ''}`} />
+                      <TableCell>{FormatUtils.date(transaction.dueDate)}</TableCell>
+                      <TableCell>{transaction.label}</TableCell>
+                      <TableCell>{transaction.description}</TableCell>
+                      <TableCell align="right">{FormatUtils.currency(transaction.amount)}</TableCell>
+                      <TableCell align="right">
+                        <IconButton size="small" onClick={() => handleCloneTransaction(transaction)} aria-label="clone transaction"><ContentCopy fontSize="small" /></IconButton>
+                        <IconButton size="small" onClick={() => handleEditTransaction(transaction)} aria-label="edit transaction"><Edit fontSize="small" /></IconButton>
+                        <IconButton size="small" onClick={() => handleDeleteTransaction(transaction)} aria-label="delete transaction"><Delete fontSize="small" /></IconButton>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
                 {viewableTransactions.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={5} align="center">
+                    <TableCell colSpan={6} align="center">
                       {selectedAccount ? t('transaction.no_transactions') : t('account.select')}
                     </TableCell>
                   </TableRow>

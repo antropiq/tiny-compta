@@ -39,3 +39,27 @@
 .logo-container {
   text-align: center;
 }
+
+.indicator-cell-header {
+  width: 4px;
+  min-width: 4px;
+  padding: 0 !important;
+}
+
+.indicator-cell {
+  width: 4px;
+  min-width: 4px;
+  padding: 0 !important;
+}
+
+.indicator-cell-today {
+  background-color: #1565C0;
+}
+
+.row-positive {
+  background-color: rgba(129, 199, 132, 0.12) !important;
+}
+
+.row-default {
+  background-color: inherit !important;
+}
