@@ -22,6 +22,7 @@
     "select": "Sélectionner un compte",
     "clearText": "Effacer",
     "closeText": "Fermer",
+    "openText": "Ouvrir",
     "noOptionsText": "Aucune option"
   },
   "transaction": {
