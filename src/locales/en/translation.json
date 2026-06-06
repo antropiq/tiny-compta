@@ -33,6 +33,7 @@
     "search": "Search",
     "filter": "Filter",
     "monthly_view": "Do not display old transactions",
+    "next_month_view": "Do not show next months transactions",
     "no_transactions": "No transactions found.",
     "dueDate": "Due Date",
     "label": "Label",

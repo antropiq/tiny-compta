@@ -34,7 +34,7 @@ const TransactionFilterDialog: React.FC<TransactionFilterDialogProps> = ({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs">
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
       <DialogTitle>{t('transaction.filter')}</DialogTitle>
       <DialogContent>
         <List>

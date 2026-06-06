@@ -285,11 +285,11 @@ describe('TransactionEditionArea', () => {
     const filterButton = screen.getByRole('button', { name: /filter/i });
     fireEvent.click(filterButton);
 
-    const checkbox = await screen.findByRole('checkbox');
-    expect(checkbox).toBeChecked();
+    const checkboxes = await screen.findAllByRole('checkbox');
+    expect(checkboxes[0]).toBeChecked();
 
-    fireEvent.click(checkbox);
-    expect(checkbox).not.toBeChecked();
+    fireEvent.click(checkboxes[0]);
+    expect(checkboxes[0]).not.toBeChecked();
   });
 
   it('shows import dialog with file input when upload icon is clicked', async () => {
@@ -326,7 +326,7 @@ describe('TransactionEditionArea', () => {
         label: 'Other Transaction',
         description: 'Other',
         amount: 20,
-        dueDate: '2026-01-01',
+        dueDate: dayjs().subtract(3, 'day').format('YYYY-MM-DD'),
       },
     ];
     vi.mocked(dbService.getTransactionsByAccountId).mockResolvedValue(transactionsWithToday);
