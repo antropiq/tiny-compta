@@ -164,4 +164,52 @@ describe('AccountList', () => {
     expect(await screen.findByText(/are you sure you want to delete this account\?/i)).toBeInTheDocument();
   });
 
- });
+  it('deletes the account when confirm button is clicked', async () => {
+    renderWithProviders(<AccountList />);
+
+    await waitFor(() => {
+      expect(dbService.getAllAccounts).toHaveBeenCalled();
+    });
+
+    const autocompleteInput = screen.getByPlaceholderText(/select account/i);
+    fireEvent.mouseDown(autocompleteInput);
+    const option = await screen.findByText('Account 1');
+    fireEvent.click(option);
+
+    const deleteButton = screen.getByRole('button', { name: /delete/i });
+    fireEvent.click(deleteButton);
+
+    const confirmButton = await screen.findByRole('button', { name: /confirm/i });
+    fireEvent.click(confirmButton);
+
+    await waitFor(() => {
+      expect(dbService.deleteAccount).toHaveBeenCalledWith('1');
+    });
+  });
+
+  it('opens AccountDialog in edition mode and saves changes', async () => {
+    renderWithProviders(<AccountList />);
+
+    await waitFor(() => {
+      expect(dbService.getAllAccounts).toHaveBeenCalled();
+    });
+
+    const autocompleteInput = screen.getByPlaceholderText(/select account/i);
+    fireEvent.mouseDown(autocompleteInput);
+    const option = await screen.findByText('Account 1');
+    fireEvent.click(option);
+
+    const editButton = screen.getByRole('button', { name: /edit/i });
+    fireEvent.click(editButton);
+
+    expect(await screen.findByText(/edit account/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/account label/i)).toHaveValue('Account 1');
+
+    const saveButton = await screen.findByRole('button', { name: /save/i });
+    fireEvent.click(saveButton);
+
+    await waitFor(() => {
+      expect(dbService.updateAccount).toHaveBeenCalled();
+    });
+  });
+});

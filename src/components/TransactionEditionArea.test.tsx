@@ -241,4 +241,71 @@ describe('TransactionEditionArea', () => {
     });
     expect(screen.queryByText('Old Transaction')).not.toBeInTheDocument();
   });
+
+  it('opens the filter dialog when filter button is clicked', async () => {
+    renderWithProviders(<TransactionEditionArea />);
+
+    const filterButton = screen.getByRole('button', { name: /filter/i });
+    fireEvent.click(filterButton);
+
+    expect(await screen.findByRole('heading', { name: /filter/i })).toBeInTheDocument();
+  });
+
+  it('shows export dialog when download button is clicked', async () => {
+    renderWithProviders(<TransactionEditionArea />);
+
+    const exportButton = screen.getByRole('button', { name: /export/i });
+    fireEvent.click(exportButton);
+
+    expect(await screen.findByRole('heading', { name: /export/i })).toBeInTheDocument();
+  });
+
+  it('shows import dialog when upload button is clicked', async () => {
+    renderWithProviders(<TransactionEditionArea />);
+
+    const importButton = screen.getByRole('button', { name: /import/i });
+    fireEvent.click(importButton);
+
+    expect(await screen.findByRole('heading', { name: /import/i })).toBeInTheDocument();
+  });
+
+  it('renders export dialog with export button when download icon is clicked', async () => {
+    renderWithProviders(<TransactionEditionArea />);
+
+    const exportIconButton = screen.getByRole('button', { name: /export/i });
+    fireEvent.click(exportIconButton);
+
+    expect(await screen.findByRole('heading', { name: /Export/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Export$/i })).toBeInTheDocument();
+  });
+
+  it('toggles filter when checkbox is clicked in filter dialog', async () => {
+    renderWithProviders(<TransactionEditionArea />);
+
+    const filterButton = screen.getByRole('button', { name: /filter/i });
+    fireEvent.click(filterButton);
+
+    const checkbox = await screen.findByRole('checkbox');
+    expect(checkbox).toBeChecked();
+
+    fireEvent.click(checkbox);
+    expect(checkbox).not.toBeChecked();
+  });
+
+  it('shows import dialog with file input when upload icon is clicked', async () => {
+    renderWithProviders(<TransactionEditionArea />);
+
+    const importIconButton = screen.getByRole('button', { name: /import/i });
+    fireEvent.click(importIconButton);
+
+    expect(await screen.findByRole('heading', { name: /Import/i })).toBeInTheDocument();
+    expect(screen.getByText(/Select a CSV or JSON file to import/i)).toBeInTheDocument();
+  });
+
+  it('shows "no transactions" message when account has no transactions', async () => {
+    vi.mocked(dbService.getTransactionsByAccountId).mockResolvedValue([]);
+    renderWithProviders(<TransactionEditionArea />);
+
+    expect(await screen.findByText(/no transactions/i)).toBeInTheDocument();
+  });
 });

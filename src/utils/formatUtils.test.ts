@@ -3,6 +3,13 @@ import { FormatUtils } from './formatUtils';
 
 describe('FormatUtils', () => {
   describe('currency', () => {
+    it('uses navigator language when no locale is provided', () => {
+      const originalLanguage = global.navigator.language;
+      Object.defineProperty(global.navigator, 'language', { value: 'fr-FR', writable: true, configurable: true });
+      const result = FormatUtils.currency(100);
+      expect(result).toContain('€');
+      Object.defineProperty(global.navigator, 'language', { value: originalLanguage, writable: true, configurable: true });
+    });
     it('formats positive numbers with currency symbol', () => {
       const result = FormatUtils.currency(100, 'en-US');
       expect(result).toContain('$');
@@ -38,6 +45,21 @@ describe('FormatUtils', () => {
       const result = FormatUtils.currency(99.999, 'en-US');
       expect(result).toContain('$');
       expect(result).toContain('100.00');
+    });
+
+    it('falls back to base language currency when full locale is unknown', () => {
+      const result = FormatUtils.currency(100, 'de');
+      expect(result).toContain('€');
+    });
+
+    it('falls back to base language currency for unknown region with known base', () => {
+      const result = FormatUtils.currency(100, 'de-AT');
+      expect(result).toContain('€');
+    });
+
+    it('defaults to USD for unknown locale and unknown base language', () => {
+      const result = FormatUtils.currency(100, 'xx-XX');
+      expect(result).toContain('$');
     });
   });
 });
