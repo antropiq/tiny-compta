@@ -22,6 +22,7 @@
     "select": "Select Account",
     "clearText": "Clear",
     "closeText": "Close",
+    "openText": "Open",
     "noOptionsText": "No options"
   },
   "transaction": {
