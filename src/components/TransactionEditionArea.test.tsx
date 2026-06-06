@@ -308,4 +308,48 @@ describe('TransactionEditionArea', () => {
 
     expect(await screen.findByText(/no transactions/i)).toBeInTheDocument();
   });
+
+  it('renders indicator column with vertical line for today transactions', async () => {
+    const today = dayjs().format('YYYY-MM-DD');
+    const transactionsWithToday: Transaction[] = [
+      {
+        id: 'tx-today',
+        accountId: 'account-1',
+        label: 'Today Transaction',
+        description: 'Today',
+        amount: 10,
+        dueDate: today,
+      },
+      {
+        id: 'tx-other',
+        accountId: 'account-1',
+        label: 'Other Transaction',
+        description: 'Other',
+        amount: 20,
+        dueDate: '2026-01-01',
+      },
+    ];
+    vi.mocked(dbService.getTransactionsByAccountId).mockResolvedValue(transactionsWithToday);
+    renderWithProviders(<TransactionEditionArea />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Today Transaction')).toBeInTheDocument();
+    });
+
+    const table = screen.getByRole('table');
+    const rows = table.querySelectorAll('tbody tr');
+    expect(rows.length).toBe(2);
+
+    const indicatorCells = table.querySelectorAll('.indicator-cell');
+    expect(indicatorCells.length).toBe(2);
+
+    const todayRow = Array.from(rows).find(row => row.textContent?.includes('Today Transaction'));
+    const otherRow = Array.from(rows).find(row => row.textContent?.includes('Other Transaction'));
+
+    const todayCells = todayRow?.querySelectorAll('td');
+    const otherCells = otherRow?.querySelectorAll('td');
+
+    expect(todayCells?.length).toBe(6);
+    expect(otherCells?.length).toBe(6);
+  });
 });

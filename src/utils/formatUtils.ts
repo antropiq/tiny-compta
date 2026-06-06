@@ -1,3 +1,6 @@
+import dayjs, { type Dayjs } from 'dayjs';
+import i18n from '../i18n';
+
 export class FormatUtils {
   /**
    * Maps a locale to its primary currency code.
@@ -62,5 +65,21 @@ export class FormatUtils {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(amount);
+  }
+
+  /**
+   * Formats a date using the current i18n locale.
+   * @param date The date to format (Dayjs object or string).
+   * @param locale Optional locale override (defaults to current i18n language).
+   * @returns A localized date string (e.g. "01/06/2026" for fr, "06/01/2026" for en).
+   */
+  static date(date: Dayjs | string, locale?: string): string {
+    const usedLocale = locale || i18n.language;
+    const dateObj = dayjs(date).toDate();
+    return new Intl.DateTimeFormat(usedLocale, {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    }).format(dateObj);
   }
 }
