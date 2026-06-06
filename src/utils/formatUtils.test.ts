@@ -5,11 +5,11 @@ import dayjs from 'dayjs';
 describe('FormatUtils', () => {
   describe('currency', () => {
     it('uses navigator language when no locale is provided', () => {
-      const originalLanguage = global.navigator.language;
-      Object.defineProperty(global.navigator, 'language', { value: 'fr-FR', writable: true, configurable: true });
+      const originalLanguage = window.navigator.language;
+      Object.defineProperty(window.navigator, 'language', { value: 'fr-FR', writable: true, configurable: true });
       const result = FormatUtils.currency(100);
       expect(result).toContain('€');
-      Object.defineProperty(global.navigator, 'language', { value: originalLanguage, writable: true, configurable: true });
+      Object.defineProperty(window.navigator, 'language', { value: originalLanguage, writable: true, configurable: true });
     });
     it('formats positive numbers with currency symbol', () => {
       const result = FormatUtils.currency(100, 'en-US');
