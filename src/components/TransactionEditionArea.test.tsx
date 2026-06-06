@@ -94,8 +94,8 @@ describe('TransactionEditionArea', () => {
 
     expect(await screen.findByText('Transaction 1')).toBeInTheDocument();
     expect(await screen.findByText('Transaction 2')).toBeInTheDocument();
-    expect(screen.getByText('10.00')).toBeInTheDocument();
-    expect(screen.getByText('20.00')).toBeInTheDocument();
+    expect(screen.getByText('$10.00')).toBeInTheDocument();
+    expect(screen.getByText('$20.00')).toBeInTheDocument();
   });
 
   it('opens TransactionEditor in create mode when "Create" button is clicked', async () => {

@@ -21,9 +21,9 @@ vi.mock('../hooks/useAccount', () => ({
 }));
 
 describe('ApplicationStatusBar', () => {
-  const mockT = (key: string, options?: { date: string; amount: string; currency: string }) => {
+  const mockT = (key: string, options?: { date: string; balance: string }) => {
     if (key === 'transaction.balance_status' && options) {
-      return `Solde du compte au ${options.date}: ${options.amount} ${options.currency}`;
+      return `Solde du compte au ${options.date}: ${options.balance}`;
     }
     return key;
   };
@@ -66,7 +66,7 @@ describe('ApplicationStatusBar', () => {
     } as unknown as ReturnType<typeof useTranslation>);
 
     render(<ApplicationStatusBar />);
-    expect(screen.getByText('Solde du compte au 15/05/2024: 123.45 €')).toBeInTheDocument();
+    expect(screen.getByText('Solde du compte au 15/05/2024: $123.45')).toBeInTheDocument();
   });
 
   it('does not render balance if no transactions', () => {
