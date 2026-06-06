@@ -20,17 +20,20 @@ The relevant typescript types to manage this object are the following:
 
 ```typescript
 export type RecurringType = 'loan' | 'credit_card' | 'subscription' | 'other';
-export type StatusType = 'active' | 'completed' | 'paused' | 'cancelled';
+export type StatusType = 'plan' | 'active' | 'completed' | 'paused' | 'cancelled';
 export type Recurring = {
 	id: string,
 	accountId: string,
 	label: string,
+    amount: number, // positive or negative but not zero!
 	recurringType : RecurringType,
 	startDate: string,
-	endDate: string,
+	endDate?: string,
 	status: StatusType
 };
 ```
+
+> Note that endDate is optional. This can be the case when a recurring as an unknown ending date like monthly electricity bill.
 
 We will also need to add a FK to the transaction table in order to link it eventually to a recurring item:
 
@@ -38,7 +41,7 @@ We will also need to add a FK to the transaction table in order to link it event
 export type Transaction = {
   id: string;
   accountId: string;
-  recurringId?: string; // <- nouveau
+  recurringId?: string; // <- new
   label: string;
   description?: string;
   amount: number;
@@ -46,11 +49,12 @@ export type Transaction = {
 };
 ```
 
-### Creating a recurring payments
+### Creating a recurring item
 
-
+For this, we create a new RecurringEditor dialog component.
 
 # DONE SECTION GOES BELLOW
 
 DONE - Enhancement - transaction toolbar - left-container vertical viewport.
 DONE - Transaction list visible items
+DONE - Add a filter for transactions

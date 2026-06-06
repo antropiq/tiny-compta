@@ -14,7 +14,7 @@ import ConfirmDialog from './ConfirmDialog';
 import ExportTransactionDialog from './ExportTransactionDialog';
 import ImportTransactionDialog from './ImportTransactionDialog';
 import TransactionFilterDialog from './TransactionFilterDialog';
-import { monthlyViewFilter } from '../filters';
+import { monthlyViewFilter, nextMonthViewFilter } from '../filters';
 import type { Filterable } from '../types/filter';
 import './TransactionEditionArea.css';
 import Logo from './logo';
@@ -31,7 +31,7 @@ const TransactionEditionArea: React.FC = () => {
   const [editorMode, setEditorMode] = useState<TransactionEditorMode>('create');
   const [transactionToEdit, setTransactionToEdit] = useState<Transaction | undefined>(undefined);
   const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
-  const [filters, setFilters] = useState<Filterable[]>([monthlyViewFilter]);
+  const [filters, setFilters] = useState<Filterable[]>([monthlyViewFilter, nextMonthViewFilter]);
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
   const [transactionToDelete, setTransactionToDelete] = useState<Transaction | undefined>(undefined);
   const [confirmMessage, setConfirmMessage] = useState('');

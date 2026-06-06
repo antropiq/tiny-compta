@@ -12,9 +12,13 @@ vi.mock('../hooks/useBalance', () => ({
   useBalance: vi.fn(),
 }));
 
-vi.mock('react-i18next', () => ({
-  useTranslation: vi.fn(),
-}));
+vi.mock(import('react-i18next'), async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    useTranslation: vi.fn(),
+  };
+});
 
 vi.mock('../hooks/useAccount', () => ({
   useAccount: vi.fn(),

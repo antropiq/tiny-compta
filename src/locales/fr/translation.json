@@ -33,6 +33,7 @@
     "search": "Rechercher",
     "filter": "Filtrer",
     "monthly_view": "Ne pas afficher les anciennes transactions",
+    "next_month_view": "Ne pas afficher les transactions des mois suivant",
     "no_transactions": "Aucune transaction trouvée.",
     "dueDate": "Date d'échéance",
     "label": "Libellé",
