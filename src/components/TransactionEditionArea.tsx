@@ -18,6 +18,7 @@ import { monthlyViewFilter } from '../filters';
 import type { Filterable } from '../types/filter';
 import './TransactionEditionArea.css';
 import Logo from './logo';
+import { FormatUtils } from '../utils/formatUtils';
 
 const TransactionEditionArea: React.FC = () => {
   const { t } = useTranslation();
@@ -213,7 +214,7 @@ const TransactionEditionArea: React.FC = () => {
                   <TableCell>{t('transaction.dueDate')}</TableCell>
                   <TableCell>{t('transaction.label')}</TableCell>
                   <TableCell>{t('transaction.description')}</TableCell>
-                  <TableCell>{t('transaction.amount')}</TableCell>
+                  <TableCell align="right">{t('transaction.amount')}</TableCell>
                   <TableCell align="right">{t('transaction.actions')}</TableCell>
                 </TableRow>
               </TableHead>
@@ -223,7 +224,7 @@ const TransactionEditionArea: React.FC = () => {
                     <TableCell>{dayjs(transaction.dueDate).format('DD/MM/YYYY')}</TableCell>
                     <TableCell>{transaction.label}</TableCell>
                     <TableCell>{transaction.description}</TableCell>
-                    <TableCell>{transaction.amount.toFixed(2)}</TableCell>
+                    <TableCell align="right">{FormatUtils.currency(transaction.amount)}</TableCell>
                     <TableCell align="right">
                       <IconButton size="small" onClick={() => handleCloneTransaction(transaction)} aria-label="clone transaction"><ContentCopy fontSize="small" /></IconButton>
                       <IconButton size="small" onClick={() => handleEditTransaction(transaction)} aria-label="edit transaction"><Edit fontSize="small" /></IconButton>

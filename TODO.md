@@ -44,6 +44,11 @@ export type Transaction = {
   amount: number;
   dueDate: string;
 };
+```
+
+### Creating a recurring payments
+
+
 
 # DONE SECTION GOES BELLOW
 
