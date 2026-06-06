@@ -166,4 +166,117 @@ describe('TransactionEditor', () => {
       expect(mockOnClose).toHaveBeenCalled();
     });
   });
+
+  it('handles comma as decimal separator in amount', async () => {
+    renderWithProviders(
+      <TransactionEditor
+        open={true}
+        onClose={mockOnClose}
+        onSave={mockOnSave}
+        mode="create"
+        accountId={accountId}
+      />
+    );
+
+    fireEvent.change(screen.getByLabelText(/label/i), { target: { value: 'Test' } });
+    fireEvent.change(screen.getByLabelText(/amount/i), { target: { value: '10,5' } });
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+
+    await waitFor(() => {
+      expect(mockOnSave).toHaveBeenCalledWith(expect.objectContaining({
+        amount: 10.5,
+      }));
+    });
+  });
+
+  it('handles empty amount as zero', async () => {
+    renderWithProviders(
+      <TransactionEditor
+        open={true}
+        onClose={mockOnClose}
+        onSave={mockOnSave}
+        mode="create"
+        accountId={accountId}
+      />
+    );
+
+    fireEvent.change(screen.getByLabelText(/label/i), { target: { value: 'Test' } });
+    fireEvent.change(screen.getByLabelText(/amount/i), { target: { value: 'abc' } });
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+
+    await waitFor(() => {
+      expect(mockOnSave).toHaveBeenCalledWith(expect.objectContaining({
+        amount: 0,
+      }));
+    });
+  });
+
+  it('handles negative amount', async () => {
+    renderWithProviders(
+      <TransactionEditor
+        open={true}
+        onClose={mockOnClose}
+        onSave={mockOnSave}
+        mode="create"
+        accountId={accountId}
+      />
+    );
+
+    fireEvent.change(screen.getByLabelText(/label/i), { target: { value: 'Test' } });
+    fireEvent.change(screen.getByLabelText(/amount/i), { target: { value: '-25' } });
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+
+    await waitFor(() => {
+      expect(mockOnSave).toHaveBeenCalledWith(expect.objectContaining({
+        amount: -25,
+      }));
+    });
+  });
+
+  it('preserves transaction id and accountId in edit mode', async () => {
+    renderWithProviders(
+      <TransactionEditor
+        open={true}
+        onClose={mockOnClose}
+        onSave={mockOnSave}
+        mode="edit"
+        transaction={mockTransaction}
+        accountId={accountId}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+
+    await waitFor(() => {
+      expect(mockOnSave).toHaveBeenCalledWith(expect.objectContaining({
+        id: 'tx-1',
+        accountId: 'account-123',
+      }));
+    });
+  });
+
+  it('generates new id in clone mode', async () => {
+    renderWithProviders(
+      <TransactionEditor
+        open={true}
+        onClose={mockOnClose}
+        onSave={mockOnSave}
+        mode="clone"
+        transaction={mockTransaction}
+        accountId={accountId}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+
+    await waitFor(() => {
+      expect(mockOnSave).toHaveBeenCalledWith(expect.objectContaining({
+        id: 'mocked-uuid',
+        accountId: 'account-123',
+      }));
+    });
+  });
 });
