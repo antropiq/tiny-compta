@@ -68,4 +68,45 @@ describe('TransactionToolbar', () => {
     renderWithI18n(<TransactionToolbar onAddTransaction={() => {}} />);
     expect(screen.getByPlaceholderText(/search by label/i)).toBeInTheDocument();
   });
+
+  it('renders the clone button', () => {
+    renderWithI18n(<TransactionToolbar onAddTransaction={() => {}} />);
+    expect(screen.getByRole('button', { name: /clone selected/i })).toBeInTheDocument();
+  });
+
+  it('disables the clone button when no transactions are selected', () => {
+    renderWithI18n(<TransactionToolbar onAddTransaction={() => {}} selectedTransactionsCount={0} />);
+    expect(screen.getByRole('button', { name: /clone selected/i })).toBeDisabled();
+  });
+
+  it('disables the clone button when more than one transaction is selected', () => {
+    renderWithI18n(<TransactionToolbar onAddTransaction={() => {}} selectedTransactionsCount={2} />);
+    expect(screen.getByRole('button', { name: /clone selected/i })).toBeDisabled();
+  });
+
+  it('enables the clone button when exactly one transaction is selected', () => {
+    renderWithI18n(<TransactionToolbar onAddTransaction={() => {}} selectedTransactionsCount={1} />);
+    expect(screen.getByRole('button', { name: /clone selected/i })).toBeEnabled();
+  });
+
+  it('calls onCloneSelected with the first selected transaction when clicked', () => {
+    const onCloneSelected = vi.fn();
+    const testTransaction = {
+      id: 'test-id',
+      accountId: 'account-id',
+      label: 'Test',
+      amount: 100,
+      dueDate: '2026-01-01',
+    };
+    renderWithI18n(
+      <TransactionToolbar
+        onAddTransaction={() => {}}
+        selectedTransactionsCount={1}
+        selectedTransactions={[testTransaction]}
+        onCloneSelected={onCloneSelected}
+      />
+    );
+    fireEvent.click(screen.getByRole('button', { name: /clone selected/i }));
+    expect(onCloneSelected).toHaveBeenCalledWith(testTransaction);
+  });
 });

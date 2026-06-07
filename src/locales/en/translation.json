@@ -48,7 +48,15 @@
     "select_all": "Select All",
     "selected_sum": "Selected: {{sum}}",
     "remove_selected": "Remove selected...",
-    "remove_selected_confirmation": "Are you sure to remove selected transactions ?"
+    "remove_selected_confirmation": "Are you sure to remove selected transactions ?",
+    "clone_selected": "Clone selected",
+    "clone_title": "Clone Transaction",
+    "clone_year": "Target Year",
+    "clone_month": "Target Month",
+    "clone_frequency": "Frequency",
+    "clone_every_month": "Every month",
+    "clone_confirm": "Clone",
+    "clone_success": "{{count}} transactions have been successfully cloned"
   },
   "export": {
     "title": "Export Transactions",
