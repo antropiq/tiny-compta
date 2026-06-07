@@ -56,6 +56,23 @@
   background-color: #1565C0;
 }
 
+.checkbox-cell-header {
+  width: 40px;
+  min-width: 40px;
+  padding: 0 !important;
+}
+
+.checkbox-cell {
+  width: 40px;
+  min-width: 40px;
+  padding: 0 !important;
+}
+
+.actions-cell {
+  white-space: nowrap;
+  padding-right: 8px !important;
+}
+
 .row-positive {
   background-color: rgba(129, 199, 132, 0.12) !important;
 }

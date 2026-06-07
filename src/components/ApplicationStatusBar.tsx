@@ -10,11 +10,13 @@ import './ApplicationStatusBar.css';
 
 const ApplicationStatusBar: React.FC = () => {
   const { t } = useTranslation();
-  const { selectedAccount, selectedDate } = useAccount();
+  const { selectedAccount, selectedDate, selectedTransactions } = useAccount();
   const { balance, hasTransactions } = useBalance();
 
   const formattedDate = (selectedDate || dayjs()).format('DD/MM/YYYY');
   const formattedBalance = FormatUtils.currency(balance);
+  const selectedSum = selectedTransactions.reduce((sum, tx) => sum + tx.amount, 0);
+  const formattedSelectedSum = FormatUtils.currency(selectedSum);
 
   return (
     <Paper component="div" className="status-bar" elevation={1}>
@@ -23,6 +25,13 @@ const ApplicationStatusBar: React.FC = () => {
           t('transaction.balance_status', {
             date: formattedDate,
             balance: formattedBalance
+          })
+        )}
+      </div>
+      <div className="status-center">
+        {selectedTransactions.length > 0 && (
+          t('transaction.selected_sum', {
+            sum: formattedSelectedSum
           })
         )}
       </div>

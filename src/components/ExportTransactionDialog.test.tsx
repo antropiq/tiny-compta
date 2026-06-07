@@ -46,6 +46,8 @@ describe('ExportTransactionDialog', () => {
       transactionsVersion: 0,
       setTransactionsVersion: vi.fn(),
       isInitializing: false,
+      selectedTransactions: [],
+      setSelectedTransactions: vi.fn(),
     } as AccountContextType);
   });
 

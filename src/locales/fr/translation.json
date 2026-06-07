@@ -43,7 +43,10 @@
     "delete": "Supprimer",
     "delete_confirmation": "Êtes-vous sûr de vouloir supprimer cette transaction ?",
     "balance_status": "Solde du compte au {{date}}: {{balance}}",
-    "search_by_label": "Rechercher par libellé"
+    "search_by_label": "Rechercher par libellé",
+    "select": "Sélectionner",
+    "select_all": "Tout sélectionner",
+    "selected_sum": "Sélectionné : {{sum}}"
   },
   "export": {
     "title": "Exportation des transactions",

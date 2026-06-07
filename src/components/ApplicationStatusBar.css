@@ -10,8 +10,16 @@
 
 .status-left {
   font-size: 0.875rem;
+  text-align: left;
+}
+
+.status-center {
+  font-size: 0.875rem;
+  text-align: center;
+  flex: 1;
 }
 
 .status-label {
   font-size: 0.875rem;
+  text-align: right;
 }

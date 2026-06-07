@@ -64,7 +64,9 @@ describe('TransactionEditionArea', () => {
       transactionsVersion: 0,
       setTransactionsVersion: vi.fn(),
       setSelectedAccount: vi.fn(),
-      isInitializing: false
+      isInitializing: false,
+      selectedTransactions: [],
+      setSelectedTransactions: vi.fn()
     });
     vi.mocked(dbService.getTransactionsByAccountId).mockResolvedValue(mockTransactions);
   });
@@ -77,7 +79,9 @@ describe('TransactionEditionArea', () => {
       transactionsVersion: 0,
       setTransactionsVersion: vi.fn(),
       setSelectedAccount: vi.fn(),
-      isInitializing: false
+      isInitializing: false,
+      selectedTransactions: [],
+      setSelectedTransactions: vi.fn()
     });
     renderWithProviders(<TransactionEditionArea />);
 
@@ -349,8 +353,8 @@ describe('TransactionEditionArea', () => {
     const todayCells = todayRow?.querySelectorAll('td');
     const otherCells = otherRow?.querySelectorAll('td');
 
-    expect(todayCells?.length).toBe(6);
-    expect(otherCells?.length).toBe(6);
+    expect(todayCells?.length).toBe(7);
+    expect(otherCells?.length).toBe(7);
   });
 
   it('displays search by label textfield in toolbar', async () => {
@@ -426,5 +430,98 @@ describe('TransactionEditionArea', () => {
     await waitFor(() => {
       expect(screen.getByText(/no transactions/i)).toBeInTheDocument();
     });
+  });
+
+  it('renders checkbox for each transaction', async () => {
+    renderWithProviders(<TransactionEditionArea />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Transaction 1')).toBeInTheDocument();
+    });
+
+    const selectAllCheckbox = screen.getByTestId('select-all-checkbox');
+    const tx1Checkbox = screen.getByTestId('checkbox-tx-1');
+    const tx2Checkbox = screen.getByTestId('checkbox-tx-2');
+    expect(selectAllCheckbox).toBeInTheDocument();
+    expect(tx1Checkbox).toBeInTheDocument();
+    expect(tx2Checkbox).toBeInTheDocument();
+  });
+
+  it('sets indeterminate state on select-all when some transactions are selected', async () => {
+    const mockSetSelectedTransactions = vi.fn();
+    vi.mocked(useAccount).mockReturnValue({
+      selectedAccount: mockAccount,
+      selectedDate: dayjs(),
+      setSelectedDate: vi.fn(),
+      transactionsVersion: 0,
+      setTransactionsVersion: vi.fn(),
+      setSelectedAccount: vi.fn(),
+      isInitializing: false,
+      selectedTransactions: [mockTransactions[0]],
+      setSelectedTransactions: mockSetSelectedTransactions,
+    });
+    vi.mocked(dbService.getTransactionsByAccountId).mockResolvedValue(mockTransactions);
+
+    renderWithProviders(<TransactionEditionArea />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Transaction 1')).toBeInTheDocument();
+    });
+
+    const selectAllWrapper = document.querySelector('[data-testid="select-all-checkbox"]') as HTMLElement;
+    const input = selectAllWrapper.querySelector('input');
+    expect(input).toHaveAttribute('data-indeterminate', 'true');
+  });
+
+  it('does not set indeterminate when no transactions are selected', async () => {
+    const mockSetSelectedTransactions = vi.fn();
+    vi.mocked(useAccount).mockReturnValue({
+      selectedAccount: mockAccount,
+      selectedDate: dayjs(),
+      setSelectedDate: vi.fn(),
+      transactionsVersion: 0,
+      setTransactionsVersion: vi.fn(),
+      setSelectedAccount: vi.fn(),
+      isInitializing: false,
+      selectedTransactions: [],
+      setSelectedTransactions: mockSetSelectedTransactions,
+    });
+    vi.mocked(dbService.getTransactionsByAccountId).mockResolvedValue(mockTransactions);
+
+    renderWithProviders(<TransactionEditionArea />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Transaction 1')).toBeInTheDocument();
+    });
+
+    const selectAllWrapper = document.querySelector('[data-testid="select-all-checkbox"]') as HTMLElement;
+    const input = selectAllWrapper.querySelector('input');
+    expect(input).not.toHaveAttribute('data-indeterminate', 'true');
+  });
+
+  it('does not set indeterminate when all transactions are selected', async () => {
+    const mockSetSelectedTransactions = vi.fn();
+    vi.mocked(useAccount).mockReturnValue({
+      selectedAccount: mockAccount,
+      selectedDate: dayjs(),
+      setSelectedDate: vi.fn(),
+      transactionsVersion: 0,
+      setTransactionsVersion: vi.fn(),
+      setSelectedAccount: vi.fn(),
+      isInitializing: false,
+      selectedTransactions: mockTransactions,
+      setSelectedTransactions: mockSetSelectedTransactions,
+    });
+    vi.mocked(dbService.getTransactionsByAccountId).mockResolvedValue(mockTransactions);
+
+    renderWithProviders(<TransactionEditionArea />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Transaction 1')).toBeInTheDocument();
+    });
+
+    const selectAllWrapper = document.querySelector('[data-testid="select-all-checkbox"]') as HTMLElement;
+    const input = selectAllWrapper.querySelector('input');
+    expect(input).not.toHaveAttribute('data-indeterminate', 'true');
   });
 });
