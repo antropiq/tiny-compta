@@ -21,6 +21,7 @@ import './TransactionEditionArea.css';
 import Logo from './logo';
 import { FormatUtils } from '../utils/formatUtils';
 import { UuidUtils } from '../utils/uuidUtils';
+import { handleRangeSelection } from '../utils/selectionUtils';
 
 const TransactionEditionArea: React.FC = () => {
   const { t } = useTranslation();
@@ -236,14 +237,22 @@ const TransactionEditionArea: React.FC = () => {
     setSnackbar({ open: true, message, severity });
   };
 
-  const handleToggleTransaction = (transaction: Transaction) => {
-    setSelectedTransactions(prev => {
-      const isSelected = prev.some(t => t.id === transaction.id);
-      if (isSelected) {
-        return prev.filter(t => t.id !== transaction.id);
-      }
-      return [...prev, transaction];
-    });
+  const handleToggleTransaction = (transaction: Transaction, event: React.ChangeEvent<HTMLInputElement>) => {
+    const clickedIndex = viewableTransactions.findIndex(t => t.id === transaction.id);
+
+    if ((event.nativeEvent as unknown as MouseEvent).shiftKey) {
+      const newSelection = handleRangeSelection(viewableTransactions, selectedTransactions, clickedIndex);
+      setSelectedTransactions(newSelection);
+    } else {
+      // Normal toggle
+      setSelectedTransactions(prev => {
+        const isSelected = prev.some(t => t.id === transaction.id);
+        if (isSelected) {
+          return prev.filter(t => t.id !== transaction.id);
+        }
+        return [...prev, transaction];
+      });
+    }
   };
 
   const handleToggleSelectAll = () => {
@@ -330,7 +339,7 @@ const TransactionEditionArea: React.FC = () => {
                       <TableCell className="checkbox-cell">
                         <Checkbox
                           checked={isSelected}
-                          onChange={() => handleToggleTransaction(transaction)}
+                          onChange={(e) => handleToggleTransaction(transaction, e)}
                           size="small"
                           aria-label={t('transaction.select')}
                           data-testid={`checkbox-${transaction.id}`}
