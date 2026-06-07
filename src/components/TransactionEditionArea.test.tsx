@@ -352,4 +352,79 @@ describe('TransactionEditionArea', () => {
     expect(todayCells?.length).toBe(6);
     expect(otherCells?.length).toBe(6);
   });
+
+  it('displays search by label textfield in toolbar', async () => {
+    renderWithProviders(<TransactionEditionArea />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Transaction 1')).toBeInTheDocument();
+    });
+
+    expect(screen.getByPlaceholderText(/search by label/i)).toBeInTheDocument();
+  });
+
+  it('filters transactions by label when typing in search field', async () => {
+    renderWithProviders(<TransactionEditionArea />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Transaction 1')).toBeInTheDocument();
+    });
+
+    const searchInput = screen.getByPlaceholderText(/search by label/i);
+    fireEvent.change(searchInput, { target: { value: 'Transaction 1' } });
+
+    expect(screen.getByText('Transaction 1')).toBeInTheDocument();
+    expect(screen.queryByText('Transaction 2')).not.toBeInTheDocument();
+  });
+
+  it('shows all transactions when search field is cleared', async () => {
+    renderWithProviders(<TransactionEditionArea />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Transaction 1')).toBeInTheDocument();
+    });
+
+    const searchInput = screen.getByPlaceholderText(/search by label/i);
+    fireEvent.change(searchInput, { target: { value: 'Transaction 1' } });
+
+    expect(screen.getByText('Transaction 1')).toBeInTheDocument();
+    expect(screen.queryByText('Transaction 2')).not.toBeInTheDocument();
+
+    const clearButton = await screen.findByTestId('clear-search');
+    fireEvent.click(clearButton);
+
+    await waitFor(() => {
+      expect(screen.getByText('Transaction 1')).toBeInTheDocument();
+      expect(screen.getByText('Transaction 2')).toBeInTheDocument();
+    });
+  });
+
+  it('performs case-insensitive label search', async () => {
+    renderWithProviders(<TransactionEditionArea />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Transaction 1')).toBeInTheDocument();
+    });
+
+    const searchInput = screen.getByPlaceholderText(/search by label/i);
+    fireEvent.change(searchInput, { target: { value: 'transaction 1' } });
+
+    expect(screen.getByText('Transaction 1')).toBeInTheDocument();
+    expect(screen.queryByText('Transaction 2')).not.toBeInTheDocument();
+  });
+
+  it('shows no transactions when search matches nothing', async () => {
+    renderWithProviders(<TransactionEditionArea />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Transaction 1')).toBeInTheDocument();
+    });
+
+    const searchInput = screen.getByPlaceholderText(/search by label/i);
+    fireEvent.change(searchInput, { target: { value: 'nonexistent' } });
+
+    await waitFor(() => {
+      expect(screen.getByText(/no transactions/i)).toBeInTheDocument();
+    });
+  });
 });

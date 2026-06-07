@@ -42,7 +42,8 @@
     "actions": "Actions",
     "delete": "Supprimer",
     "delete_confirmation": "Êtes-vous sûr de vouloir supprimer cette transaction ?",
-    "balance_status": "Solde du compte au {{date}}: {{balance}}"
+    "balance_status": "Solde du compte au {{date}}: {{balance}}",
+    "search_by_label": "Rechercher par libellé"
   },
   "export": {
     "title": "Exportation des transactions",
