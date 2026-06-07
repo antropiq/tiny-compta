@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, IconButton, TextField, Tooltip } from '@mui/material';
-import { Add, Clear, ContentCopy, DeleteSweep, FilterList } from '@mui/icons-material';
+import { Add, Clear, CopyAll, DeleteSweep, FilterList } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import type { Transaction } from '../types/transaction';
 
@@ -32,9 +32,9 @@ const TransactionToolbar: React.FC<TransactionToolbarProps> = ({ onAddTransactio
     <Box sx={{ display: 'flex', gap: 1, mb: 2, alignItems: 'center', justifyContent: 'center' }}>
       <Tooltip title={t('transaction.create')}>
         <span style={{ display: 'inline-block' }}>
-          <IconButton 
-            onClick={onAddTransaction} 
-            color="primary" 
+          <IconButton
+            onClick={onAddTransaction}
+            color="primary"
             disabled={disabled}
             aria-label={t('transaction.create')}
           >
@@ -77,7 +77,7 @@ const TransactionToolbar: React.FC<TransactionToolbarProps> = ({ onAddTransactio
               disabled={selectedTransactionsCount !== 1}
               aria-label={t('transaction.clone_selected')}
             >
-              <ContentCopy />
+              <CopyAll />
             </IconButton>
           </span>
         </Tooltip>
