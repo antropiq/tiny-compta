@@ -14,11 +14,13 @@ import ConfirmDialog from './ConfirmDialog';
 import ExportTransactionDialog from './ExportTransactionDialog';
 import ImportTransactionDialog from './ImportTransactionDialog';
 import TransactionFilterDialog from './TransactionFilterDialog';
+import TransactionCloningDialog from './TransactionCloningDialog';
 import { monthlyViewFilter, nextMonthViewFilter } from '../filters';
 import type { Filterable } from '../types/filter';
 import './TransactionEditionArea.css';
 import Logo from './logo';
 import { FormatUtils } from '../utils/formatUtils';
+import { UuidUtils } from '../utils/uuidUtils';
 
 const TransactionEditionArea: React.FC = () => {
   const { t } = useTranslation();
@@ -31,6 +33,8 @@ const TransactionEditionArea: React.FC = () => {
   const [editorMode, setEditorMode] = useState<TransactionEditorMode>('create');
   const [transactionToEdit, setTransactionToEdit] = useState<Transaction | undefined>(undefined);
   const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
+  const [isCloningDialogOpen, setIsCloningDialogOpen] = useState(false);
+  const [transactionToClone, setTransactionToClone] = useState<Transaction | undefined>(undefined);
   const [filters, setFilters] = useState<Filterable[]>([monthlyViewFilter, nextMonthViewFilter]);
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
   const [transactionToDelete, setTransactionToDelete] = useState<Transaction | undefined>(undefined);
@@ -153,6 +157,43 @@ const TransactionEditionArea: React.FC = () => {
     setIsRemoveSelectedDialogOpen(true);
   };
 
+  const handleCloneSelected = (transaction: Transaction) => {
+    if (selectedTransactions.length === 1) {
+      setTransactionToClone(transaction);
+      setIsCloningDialogOpen(true);
+    }
+  };
+
+  const handleConfirmCloning = async (targetDate: dayjs.Dayjs) => {
+    if (!selectedAccount || selectedTransactions.length !== 1) return;
+
+    const source = selectedTransactions[0];
+    const sourceDate = dayjs(source.dueDate);
+    const target = dayjs(targetDate);
+
+    // Calculate the number of months between source and target
+    const monthsDiff = target.year() * 12 + target.month() - (sourceDate.year() * 12 + sourceDate.month());
+
+    const newTransactions: Transaction[] = [];
+    for (let i = 1; i <= monthsDiff; i++) {
+      const clonedDate = sourceDate.add(i, 'month');
+      newTransactions.push({
+        id: UuidUtils.generate(),
+        accountId: selectedAccount.id,
+        label: source.label,
+        description: source.description,
+        amount: source.amount,
+        dueDate: clonedDate.format('YYYY-MM-DD'),
+      });
+    }
+
+    await Promise.all(newTransactions.map(tx => dbService.addTransaction(tx)));
+    setSelectedTransactions([]);
+    setTransactionsVersion(v => v + 1);
+    await refreshTransactions();
+    handleOpenSnackbar(t('transaction.clone_success', { count: newTransactions.length }), 'success');
+  };
+
   const handleConfirmRemoveSelected = async () => {
     const selectedIds = selectedTransactions.map(t => t.id);
     await Promise.all(selectedIds.map(id => dbService.deleteTransaction(id)));
@@ -246,7 +287,17 @@ const TransactionEditionArea: React.FC = () => {
       </Paper>
 
       <Paper className="right-container" elevation={0} variant="outlined">
-        <TransactionToolbar onAddTransaction={handleAddTransaction} onFilterClick={handleOpenFilterDialog} onRemoveSelected={handleRemoveSelected} disabled={!selectedAccount} hasSelectedTransactions={selectedTransactions.length > 0} searchLabel={searchLabel} onSearchLabelChange={setSearchLabel} />
+        <TransactionToolbar 
+          onAddTransaction={handleAddTransaction} 
+          onFilterClick={handleOpenFilterDialog} 
+          onRemoveSelected={handleRemoveSelected}
+          onCloneSelected={handleCloneSelected}
+          disabled={!selectedAccount} 
+          hasSelectedTransactions={selectedTransactions.length > 0}
+          selectedTransactionsCount={selectedTransactions.length}
+          searchLabel={searchLabel} 
+          onSearchLabelChange={setSearchLabel} 
+        />
         <Box className="table-container">
           <Table size="small" sx={{ fontSize: '0.875rem' }} stickyHeader>
               <TableHead>
@@ -351,6 +402,13 @@ const TransactionEditionArea: React.FC = () => {
         onClose={() => setIsFilterDialogOpen(false)}
         filters={filters}
         onFilterChange={handleFilterChange}
+      />
+
+      <TransactionCloningDialog
+        open={isCloningDialogOpen}
+        onClose={() => setIsCloningDialogOpen(false)}
+        onConfirm={handleConfirmCloning}
+        sourceTransaction={transactionToClone || selectedTransactions[0]}
       />
 
       <Snackbar
