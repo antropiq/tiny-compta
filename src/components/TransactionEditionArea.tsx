@@ -37,6 +37,7 @@ const TransactionEditionArea: React.FC = () => {
   const [confirmMessage, setConfirmMessage] = useState('');
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  const [searchLabel, setSearchLabel] = useState('');
   const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' | 'warning' | 'info' }>({
     open: false,
     message: '',
@@ -78,8 +79,11 @@ const TransactionEditionArea: React.FC = () => {
         filtered = f.apply(filtered);
       }
     });
+    if (searchLabel) {
+      filtered = filtered.filter(t => t.label.toLowerCase().includes(searchLabel.toLowerCase()));
+    }
     return filtered.sort((a, b) => dayjs(a.dueDate).diff(dayjs(b.dueDate)));
-  }, [databaseTransactions, filters]);
+  }, [databaseTransactions, filters, searchLabel]);
 
   const handleFilterChange = (filter: Filterable) => {
     setFilters(prevFilters => {
@@ -206,7 +210,7 @@ const TransactionEditionArea: React.FC = () => {
       </Paper>
 
       <Paper className="right-container" elevation={0} variant="outlined">
-        <TransactionToolbar onAddTransaction={handleAddTransaction} onFilterClick={handleOpenFilterDialog} disabled={!selectedAccount} />
+        <TransactionToolbar onAddTransaction={handleAddTransaction} onFilterClick={handleOpenFilterDialog} disabled={!selectedAccount} searchLabel={searchLabel} onSearchLabelChange={setSearchLabel} />
         <Box className="table-container">
           <Table size="small" sx={{ fontSize: '0.875rem' }} stickyHeader>
               <TableHead>

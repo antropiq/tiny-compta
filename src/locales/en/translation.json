@@ -42,7 +42,8 @@
     "actions": "Actions",
     "delete": "Delete",
     "delete_confirmation": "Are you sure you want to delete this transaction?",
-    "balance_status": "Account balance as of {{date}}: {{balance}}"
+    "balance_status": "Account balance as of {{date}}: {{balance}}",
+    "search_by_label": "Search by label"
   },
   "export": {
     "title": "Export Transactions",
