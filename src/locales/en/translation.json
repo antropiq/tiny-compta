@@ -46,7 +46,9 @@
     "search_by_label": "Search by label",
     "select": "Select",
     "select_all": "Select All",
-    "selected_sum": "Selected: {{sum}}"
+    "selected_sum": "Selected: {{sum}}",
+    "remove_selected": "Remove selected...",
+    "remove_selected_confirmation": "Are you sure to remove selected transactions ?"
   },
   "export": {
     "title": "Export Transactions",
