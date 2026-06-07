@@ -1,14 +1,15 @@
 {
   "name": "tiny-compta",
   "private": true,
-  "version": "0.0.5",
+  "version": "0.1.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "vitest"
+    "test": "vitest",
+    "tauri": "tauri"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -23,7 +24,8 @@
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "react-i18next": "^17.0.8",
-    "uuid": "^14.0.0"
+    "uuid": "^14.0.0",
+    "@tauri-apps/api": "^1"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -44,6 +46,7 @@
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.59.2",
     "vite": "^8.0.12",
-    "vitest": "^4.1.7"
+    "vitest": "^4.1.7",
+    "@tauri-apps/cli": "^1"
   }
 }

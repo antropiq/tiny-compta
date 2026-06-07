@@ -1,0 +1,47 @@
+{
+  "$schema": "https://schema.tauri.app/config/1",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build",
+    "devPath": "http://localhost:1420",
+    "distDir": "../dist"
+  },
+  "package": {
+    "productName": "tiny-compta",
+    "version": "0.1.0"
+  },
+  "tauri": {
+    "allowlist": {
+      "all": false,
+      "shell": {
+        "all": false,
+        "open": true
+      }
+    },
+    "windows": [
+      {
+        "title": "tiny-compta",
+        "width": 1280,
+        "height": 720
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'"
+    },
+    "bundle": {
+      "active": true,
+      "targets": ["nsis"],
+      "identifier": "org.vgr.tiny-compta",
+      "icon": [
+        "icons/32x32.png",
+        "icons/128x128.png",
+        "icons/128x128@2x.png",
+        "icons/icon.icns",
+        "icons/icon.ico",
+        "icons/icon.png",
+        "icons/Square150x150Logo.png",
+        "icons/StoreLogo.png"
+      ]
+    }
+  }
+}
