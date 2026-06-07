@@ -63,3 +63,11 @@ npm run lint
 ```bash
 npm run test
 ```
+
+### build desktop app
+
+> Rust must be installed on your environment (ex for windows: winget install --id Rustlang.Rustup)
+
+```bash
+npm run tauri build
+```
