@@ -2,6 +2,8 @@
 
 **Tiny Compta** is a lightweight, browser-based bank account management application for personal finance tracking. It lets you manage multiple bank accounts and their transactions with features for importing/exporting data and real-time balance calculation based on an end date.
 
+![Screenshot](./resources/cpecran.png)
+
 ## Features
 
 - Manage multiple bank accounts
