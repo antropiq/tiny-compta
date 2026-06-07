@@ -24,3 +24,7 @@ dist-ssr
 *.sw?
 
 coverage/
+.certs/
+*.pfx
+*.p12
+.env

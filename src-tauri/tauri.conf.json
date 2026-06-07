@@ -4,7 +4,8 @@
     "beforeDevCommand": "npm run dev",
     "beforeBuildCommand": "npm run build",
     "devPath": "http://localhost:1420",
-    "distDir": "../dist"
+    "distDir": "../dist",
+    "withGlobalTauri": true
   },
   "package": {
     "productName": "tiny-compta",
@@ -30,7 +31,7 @@
     },
     "bundle": {
       "active": true,
-      "targets": ["nsis"],
+      "targets": ["msi"],
       "identifier": "org.vgr.tiny-compta",
       "icon": [
         "icons/32x32.png",
@@ -41,7 +42,15 @@
         "icons/icon.png",
         "icons/Square150x150Logo.png",
         "icons/StoreLogo.png"
-      ]
+      ],
+      "windows": {
+        "certificateThumbprint": null,
+        "digestAlgorithm": "sha256",
+        "timestampUrl": "",
+        "webviewInstallMode": {
+          "type": "embedBootstrapper"
+        }
+      }
     }
   }
 }
