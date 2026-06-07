@@ -1,17 +1,19 @@
 import React from 'react';
 import { Box, IconButton, TextField, Tooltip } from '@mui/material';
-import { Add, Clear, FilterList } from '@mui/icons-material';
+import { Add, Clear, DeleteSweep, FilterList } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 
 interface TransactionToolbarProps {
   onAddTransaction: () => void;
   onFilterClick?: () => void;
+  onRemoveSelected?: () => void;
   disabled?: boolean;
+  hasSelectedTransactions?: boolean;
   searchLabel?: string;
   onSearchLabelChange?: (value: string) => void;
 }
 
-const TransactionToolbar: React.FC<TransactionToolbarProps> = ({ onAddTransaction, onFilterClick, disabled, searchLabel = '', onSearchLabelChange }) => {
+const TransactionToolbar: React.FC<TransactionToolbarProps> = ({ onAddTransaction, onFilterClick, onRemoveSelected, disabled, hasSelectedTransactions = false, searchLabel = '', onSearchLabelChange }) => {
   const { t } = useTranslation();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -62,6 +64,20 @@ const TransactionToolbar: React.FC<TransactionToolbarProps> = ({ onAddTransactio
         }}
         sx={{ maxWidth: 300, flexGrow: 1 }}
       />
+      <Box sx={{ display: 'flex', gap: 1, ml: 'auto' }}>
+        <Tooltip title={t('transaction.remove_selected')}>
+          <span>
+            <IconButton
+              onClick={onRemoveSelected}
+              color="error"
+              disabled={!hasSelectedTransactions}
+              aria-label={t('transaction.remove_selected')}
+            >
+              <DeleteSweep />
+            </IconButton>
+          </span>
+        </Tooltip>
+      </Box>
     </Box>
   );
 };
