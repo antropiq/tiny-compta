@@ -524,4 +524,100 @@ describe('TransactionEditionArea', () => {
     const input = selectAllWrapper.querySelector('input');
     expect(input).not.toHaveAttribute('data-indeterminate', 'true');
   });
+
+  it('disables the remove selected button when no transactions are selected', async () => {
+    renderWithProviders(<TransactionEditionArea />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Transaction 1')).toBeInTheDocument();
+    });
+
+    const removeButton = screen.getByRole('button', { name: /remove selected/i });
+    expect(removeButton).toBeDisabled();
+  });
+
+  it('enables the remove selected button when transactions are selected', async () => {
+    const mockSetSelectedTransactions = vi.fn();
+    vi.mocked(useAccount).mockReturnValue({
+      selectedAccount: mockAccount,
+      selectedDate: dayjs(),
+      setSelectedDate: vi.fn(),
+      transactionsVersion: 0,
+      setTransactionsVersion: vi.fn(),
+      setSelectedAccount: vi.fn(),
+      isInitializing: false,
+      selectedTransactions: [mockTransactions[0]],
+      setSelectedTransactions: mockSetSelectedTransactions,
+    });
+    vi.mocked(dbService.getTransactionsByAccountId).mockResolvedValue(mockTransactions);
+
+    renderWithProviders(<TransactionEditionArea />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Transaction 1')).toBeInTheDocument();
+    });
+
+    const removeButton = screen.getByRole('button', { name: /remove selected/i });
+    expect(removeButton).toBeEnabled();
+  });
+
+  it('opens confirm dialog when remove selected button is clicked', async () => {
+    const mockSetSelectedTransactions = vi.fn();
+    vi.mocked(useAccount).mockReturnValue({
+      selectedAccount: mockAccount,
+      selectedDate: dayjs(),
+      setSelectedDate: vi.fn(),
+      transactionsVersion: 0,
+      setTransactionsVersion: vi.fn(),
+      setSelectedAccount: vi.fn(),
+      isInitializing: false,
+      selectedTransactions: [mockTransactions[0]],
+      setSelectedTransactions: mockSetSelectedTransactions,
+    });
+    vi.mocked(dbService.getTransactionsByAccountId).mockResolvedValue(mockTransactions);
+
+    renderWithProviders(<TransactionEditionArea />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Transaction 1')).toBeInTheDocument();
+    });
+
+    const removeButton = screen.getByRole('button', { name: /remove selected/i });
+    fireEvent.click(removeButton);
+
+    expect(await screen.findByText(/are you sure to remove selected transactions/i)).toBeInTheDocument();
+  });
+
+  it('removes selected transactions when confirmed', async () => {
+    const mockSetSelectedTransactions = vi.fn();
+    vi.mocked(useAccount).mockReturnValue({
+      selectedAccount: mockAccount,
+      selectedDate: dayjs(),
+      setSelectedDate: vi.fn(),
+      transactionsVersion: 0,
+      setTransactionsVersion: vi.fn(),
+      setSelectedAccount: vi.fn(),
+      isInitializing: false,
+      selectedTransactions: [mockTransactions[0]],
+      setSelectedTransactions: mockSetSelectedTransactions,
+    });
+    vi.mocked(dbService.getTransactionsByAccountId).mockResolvedValue(mockTransactions);
+    vi.mocked(dbService.deleteTransaction).mockResolvedValue(undefined);
+
+    renderWithProviders(<TransactionEditionArea />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Transaction 1')).toBeInTheDocument();
+    });
+
+    const removeButton = screen.getByRole('button', { name: /remove selected/i });
+    fireEvent.click(removeButton);
+
+    const confirmButton = await screen.findByRole('button', { name: /confirm/i });
+    fireEvent.click(confirmButton);
+
+    await waitFor(() => {
+      expect(dbService.deleteTransaction).toHaveBeenCalledWith('tx-1');
+    });
+  });
 });

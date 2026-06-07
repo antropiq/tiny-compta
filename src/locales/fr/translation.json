@@ -46,7 +46,17 @@
     "search_by_label": "Rechercher par libellé",
     "select": "Sélectionner",
     "select_all": "Tout sélectionner",
-    "selected_sum": "Sélectionné : {{sum}}"
+    "selected_sum": "Sélectionné : {{sum}}",
+    "remove_selected": "Supprimer la sélection...",
+    "remove_selected_confirmation": "Êtes-vous sûr de vouloir supprimer les transactions sélectionnées ?",
+    "clone_selected": "Cloner la sélection",
+    "clone_title": "Cloner la Transaction",
+    "clone_year": "Année Cible",
+    "clone_month": "Mois Cible",
+    "clone_frequency": "Fréquence",
+    "clone_every_month": "Chaque mois",
+    "clone_confirm": "Cloner",
+    "clone_success": "{{count}} transactions ont été clonées avec succès"
   },
   "export": {
     "title": "Exportation des transactions",
