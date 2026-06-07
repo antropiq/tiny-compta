@@ -41,7 +41,9 @@ describe('ApplicationStatusBar', () => {
       setSelectedDate: vi.fn(),
       transactionsVersion: 0,
       setTransactionsVersion: vi.fn(),
-      isInitializing: false
+      isInitializing: false,
+      selectedTransactions: [],
+      setSelectedTransactions: vi.fn()
     } as AccountContextType);
     vi.mocked(useTranslation).mockReturnValue({
       t: mockT,
@@ -62,7 +64,9 @@ describe('ApplicationStatusBar', () => {
       setSelectedDate: vi.fn(),
       transactionsVersion: 0,
       setTransactionsVersion: vi.fn(),
-      isInitializing: false
+      isInitializing: false,
+      selectedTransactions: [],
+      setSelectedTransactions: vi.fn()
     } as AccountContextType);
     vi.mocked(useTranslation).mockReturnValue({
       t: mockT,
@@ -82,7 +86,9 @@ describe('ApplicationStatusBar', () => {
       setSelectedDate: vi.fn(),
       transactionsVersion: 0,
       setTransactionsVersion: vi.fn(),
-      isInitializing: false
+      isInitializing: false,
+      selectedTransactions: [],
+      setSelectedTransactions: vi.fn()
     } as AccountContextType);
     vi.mocked(useTranslation).mockReturnValue({
       t: mockT,
@@ -102,7 +108,9 @@ describe('ApplicationStatusBar', () => {
       setSelectedDate: vi.fn(),
       transactionsVersion: 0,
       setTransactionsVersion: vi.fn(),
-      isInitializing: false
+      isInitializing: false,
+      selectedTransactions: [],
+      setSelectedTransactions: vi.fn()
     } as AccountContextType);
     vi.mocked(useTranslation).mockReturnValue({
       t: mockT,
@@ -111,5 +119,58 @@ describe('ApplicationStatusBar', () => {
 
     render(<ApplicationStatusBar />);
     expect(screen.queryByText(/Solde du compte/)).not.toBeInTheDocument();
+  });
+
+  it('does not render selected sum when no transactions are selected', () => {
+    vi.mocked(useBalance).mockReturnValue({ balance: 0, loading: false, hasTransactions: false });
+    vi.mocked(useAccount).mockReturnValue({ 
+      selectedAccount: null, 
+      selectedDate: dayjs(),
+      setSelectedAccount: vi.fn(),
+      setSelectedDate: vi.fn(),
+      transactionsVersion: 0,
+      setTransactionsVersion: vi.fn(),
+      isInitializing: false,
+      selectedTransactions: [],
+      setSelectedTransactions: vi.fn()
+    } as AccountContextType);
+    vi.mocked(useTranslation).mockReturnValue({
+      t: mockT,
+      i18n: { language: 'fr' },
+    } as unknown as ReturnType<typeof useTranslation>);
+
+    render(<ApplicationStatusBar />);
+    expect(screen.queryByText(/Sélectionné/)).not.toBeInTheDocument();
+  });
+
+  it('renders selected sum when transactions are selected', () => {
+    const mockSelectedTransactions = [
+      { id: 'tx-1', accountId: '1', label: 'T1', amount: 10, dueDate: '2024-01-01' },
+      { id: 'tx-2', accountId: '1', label: 'T2', amount: 20, dueDate: '2024-01-02' },
+    ];
+    vi.mocked(useBalance).mockReturnValue({ balance: 0, loading: false, hasTransactions: false });
+    vi.mocked(useAccount).mockReturnValue({ 
+      selectedAccount: null, 
+      selectedDate: dayjs(),
+      setSelectedAccount: vi.fn(),
+      setSelectedDate: vi.fn(),
+      transactionsVersion: 0,
+      setTransactionsVersion: vi.fn(),
+      isInitializing: false,
+      selectedTransactions: mockSelectedTransactions,
+      setSelectedTransactions: vi.fn()
+    } as AccountContextType);
+    vi.mocked(useTranslation).mockReturnValue({
+      t: (key: string, options?: { sum: string }) => {
+        if (key === 'transaction.selected_sum' && options) {
+          return `Sélectionné : ${options.sum}`;
+        }
+        return key;
+      },
+      i18n: { language: 'fr' },
+    } as unknown as ReturnType<typeof useTranslation>);
+
+    render(<ApplicationStatusBar />);
+    expect(screen.getByText('Sélectionné : $30.00')).toBeInTheDocument();
   });
 });

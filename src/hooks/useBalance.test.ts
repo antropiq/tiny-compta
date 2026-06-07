@@ -33,6 +33,8 @@ describe('useBalance', () => {
       setSelectedDate: vi.fn(),
       setTransactionsVersion: vi.fn(),
       isInitializing: false,
+      selectedTransactions: [],
+      setSelectedTransactions: vi.fn(),
     } as AccountContextType);
 
     vi.mocked(dbService.getTransactionsByAccountId).mockResolvedValue(mockTransactions);
@@ -54,6 +56,8 @@ describe('useBalance', () => {
       setSelectedDate: vi.fn(),
       setTransactionsVersion: vi.fn(),
       isInitializing: false,
+      selectedTransactions: [],
+      setSelectedTransactions: vi.fn(),
     } as AccountContextType);
 
     const { result } = renderHook(() => useBalance());
@@ -74,6 +78,8 @@ describe('useBalance', () => {
       setSelectedDate: vi.fn(),
       setTransactionsVersion: vi.fn(),
       isInitializing: false,
+      selectedTransactions: [],
+      setSelectedTransactions: vi.fn(),
     } as AccountContextType);
 
     vi.mocked(dbService.getTransactionsByAccountId).mockResolvedValue([]);

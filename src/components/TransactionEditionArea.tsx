@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Box, Paper, Table, TableBody, TableCell, TableHead, TableRow, IconButton, Tooltip, Snackbar, Alert, useTheme } from '@mui/material';
+import { Box, Paper, Table, TableBody, TableCell, TableHead, TableRow, IconButton, Tooltip, Snackbar, Alert, useTheme, Checkbox } from '@mui/material';
 import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
 import { ContentCopy, Edit, Delete, Download, Upload } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
@@ -22,7 +22,7 @@ import { FormatUtils } from '../utils/formatUtils';
 
 const TransactionEditionArea: React.FC = () => {
   const { t } = useTranslation();
-  const { selectedAccount, selectedDate, setSelectedDate, setTransactionsVersion, transactionsVersion } = useAccount();
+  const { selectedAccount, selectedDate, setSelectedDate, setTransactionsVersion, transactionsVersion, selectedTransactions, setSelectedTransactions } = useAccount();
   const theme = useTheme();
   const primaryColor = theme.palette?.primary?.main || "#D4AF37";
 
@@ -38,6 +38,7 @@ const TransactionEditionArea: React.FC = () => {
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [searchLabel, setSearchLabel] = useState('');
+  const [selectAll, setSelectAll] = useState(false);
   const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' | 'warning' | 'info' }>({
     open: false,
     message: '',
@@ -179,6 +180,26 @@ const TransactionEditionArea: React.FC = () => {
     setSnackbar({ open: true, message, severity });
   };
 
+  const handleToggleTransaction = (transaction: Transaction) => {
+    setSelectedTransactions(prev => {
+      const isSelected = prev.some(t => t.id === transaction.id);
+      if (isSelected) {
+        return prev.filter(t => t.id !== transaction.id);
+      }
+      return [...prev, transaction];
+    });
+  };
+
+  const handleToggleSelectAll = () => {
+    const newSelectAll = !selectAll;
+    setSelectAll(newSelectAll);
+    if (newSelectAll) {
+      setSelectedTransactions([...viewableTransactions]);
+    } else {
+      setSelectedTransactions([]);
+    }
+  };
+
   return (
     <Box className="transaction-edition-area">
       <Paper className="left-container" elevation={0} variant="outlined" >
@@ -216,24 +237,44 @@ const TransactionEditionArea: React.FC = () => {
               <TableHead>
                 <TableRow>
                   <TableCell className="indicator-cell-header" />
+                  <TableCell className="checkbox-cell-header">
+                    <Checkbox
+                      indeterminate={selectedTransactions.length > 0 && selectedTransactions.length < viewableTransactions.length && viewableTransactions.length > 0}
+                      checked={selectAll}
+                      onChange={handleToggleSelectAll}
+                      size="small"
+                      aria-label={t('transaction.select_all')}
+                      data-testid="select-all-checkbox"
+                    />
+                  </TableCell>
                   <TableCell>{t('transaction.dueDate')}</TableCell>
                   <TableCell>{t('transaction.label')}</TableCell>
                   <TableCell>{t('transaction.description')}</TableCell>
                   <TableCell align="right">{t('transaction.amount')}</TableCell>
-                  <TableCell align="right">{t('transaction.actions')}</TableCell>
+                  <TableCell align="right" className="actions-cell">{t('transaction.actions')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {viewableTransactions.map((transaction) => {
                   const isToday = dayjs(transaction.dueDate).isSame(dayjs(), 'day');
+                  const isSelected = selectedTransactions.some(t => t.id === transaction.id);
                   return (
                     <TableRow key={transaction.id} className={transaction.amount > 0 ? 'row-positive' : 'row-default'}>
                       <TableCell className={`indicator-cell ${isToday ? 'indicator-cell-today' : ''}`} />
+                      <TableCell className="checkbox-cell">
+                        <Checkbox
+                          checked={isSelected}
+                          onChange={() => handleToggleTransaction(transaction)}
+                          size="small"
+                          aria-label={t('transaction.select')}
+                          data-testid={`checkbox-${transaction.id}`}
+                        />
+                      </TableCell>
                       <TableCell>{FormatUtils.date(transaction.dueDate)}</TableCell>
                       <TableCell>{transaction.label}</TableCell>
                       <TableCell>{transaction.description}</TableCell>
                       <TableCell align="right">{FormatUtils.currency(transaction.amount)}</TableCell>
-                      <TableCell align="right">
+                      <TableCell className="actions-cell" align="right">
                         <IconButton size="small" onClick={() => handleCloneTransaction(transaction)} aria-label="clone transaction"><ContentCopy fontSize="small" /></IconButton>
                         <IconButton size="small" onClick={() => handleEditTransaction(transaction)} aria-label="edit transaction"><Edit fontSize="small" /></IconButton>
                         <IconButton size="small" onClick={() => handleDeleteTransaction(transaction)} aria-label="delete transaction"><Delete fontSize="small" /></IconButton>
@@ -243,7 +284,7 @@ const TransactionEditionArea: React.FC = () => {
                 })}
                 {viewableTransactions.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={6} align="center">
+                    <TableCell colSpan={7} align="center">
                       {selectedAccount ? t('transaction.no_transactions') : t('account.select')}
                     </TableCell>
                   </TableRow>
