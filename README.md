@@ -1,6 +1,6 @@
 # Tiny Compta
 
-**Tiny Compta** is a lightweight, browser-based bank account management application for personal finance tracking. It lets you manage multiple bank accounts and their transactions with features for importing/exporting data and real-time balance calculation based on an end date.
+**Tiny Compta** is a lightweight, browser-based bank account management application for personal finance tracking. It lets you manage multiple bank accounts, track associated transactions, and manage recurring payment plans with automatic monthly generation. Features also include data importing/exporting (transactions and recurring payment plans) and real-time balance calculation based on an end date.
 
 ![Screenshot](./resources/cpecran.png)
 
@@ -9,7 +9,7 @@
 - Manage multiple bank accounts
 - Track transactions with labels, descriptions, amounts, and due dates
 - Manage recurring payment plans with custom intervals, start/end dates, and automatic/manual generation
-- Import and export transaction data
+- Import and export transaction and recurring payment data (JSON and CSV formats)
 - Real-time balance calculation
 - Persistent storage via IndexedDB
 - Multi-language support (English & French)
