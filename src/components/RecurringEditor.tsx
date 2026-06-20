@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -38,6 +38,7 @@ const RecurringEditor: React.FC<RecurringEditorProps> = ({
   const [dayOfMonth, setDayOfMonth] = useState<string>('1');
   const [startDate, setStartDate] = useState<Dayjs | null>(dayjs());
   const [endDate, setEndDate] = useState<Dayjs | null>(null);
+  const labelInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (open) {
@@ -57,6 +58,12 @@ const RecurringEditor: React.FC<RecurringEditorProps> = ({
         setStartDate(dayjs());
         setEndDate(null);
       }
+      setTimeout(() => {
+        if (labelInputRef.current) {
+          labelInputRef.current.focus();
+          labelInputRef.current.select();
+        }
+      }, 50);
     }
   }, [open, mode, recurring]);
 
@@ -81,13 +88,28 @@ const RecurringEditor: React.FC<RecurringEditorProps> = ({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+    <Dialog
+      open={open}
+      onClose={onClose}
+      fullWidth
+      maxWidth="sm"
+      slotProps={{
+        paper: {
+          sx: {
+            minHeight: '530px',
+            display: 'flex',
+            flexDirection: 'column',
+          }
+        }
+      }}
+    >
       <DialogTitle>
         {mode === 'create' ? t('recurring.create') : t('recurring.edit')}
       </DialogTitle>
-      <DialogContent>
-        <Stack spacing={3} sx={{ mt: 1 }}>
+      <DialogContent sx={{ overflowY: 'hidden', display: 'flex', flexDirection: 'column' }}>
+        <Stack spacing={2} sx={{ mt: 1, flex: 1 }}>
           <TextField
+            inputRef={labelInputRef}
             label={t('transaction.label')}
             value={label}
             onChange={(e) => setLabel(e.target.value)}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -38,6 +38,7 @@ const TransactionEditor: React.FC<TransactionEditorProps> = ({
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState<string>('0');
   const [dueDate, setDueDate] = useState<Dayjs | null>(dayjs());
+  const labelInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (open) {
@@ -59,6 +60,12 @@ const TransactionEditor: React.FC<TransactionEditorProps> = ({
         setAmount('0');
         setDueDate(dayjs());
       }
+      setTimeout(() => {
+        if (labelInputRef.current) {
+          labelInputRef.current.focus();
+          labelInputRef.current.select();
+        }
+      }, 50);
     }
   }, [open, mode, transaction]);
 
@@ -85,6 +92,7 @@ const TransactionEditor: React.FC<TransactionEditorProps> = ({
       <DialogContent>
         <Stack spacing={3} sx={{ mt: 1 }}>
           <TextField
+            inputRef={labelInputRef}
             label={t('transaction.label')}
             value={label}
             onChange={(e) => setLabel(e.target.value)}

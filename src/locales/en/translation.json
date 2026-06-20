@@ -103,6 +103,12 @@
     "delete_prompt_message": "Would you like to keep the existing transactions linked to this recurring payment or delete them at the same time?",
     "delete_prompt_keep": "Keep",
     "delete_prompt_delete": "Delete",
-    "update_cascade_prompt": "The recurring amount has been changed: would you like to apply this new amount to remaining transactions (current and future months)?"
+    "update_cascade_prompt": "The recurring amount has been changed: would you like to apply this new amount to remaining transactions (current and future months)?",
+    "export_title": "Export Recurring Payments",
+    "import_title": "Import Recurring Payments",
+    "export_success": "{{count}} recurring payments have been successfully exported to file {{filename}}",
+    "import_success": "{{count}} recurring payments have been imported into account {{accountLabel}}",
+    "import_error_invalid_format": "Json content does not follow the good structure for recurring payments",
+    "import_error_invalid_data": "Invalid data in one or more recurring payments. Import aborted."
   }
 }

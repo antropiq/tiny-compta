@@ -79,4 +79,21 @@ describe('AccountDialog', () => {
     expect(dbService.addAccount).not.toHaveBeenCalled();
     expect(dbService.updateAccount).not.toHaveBeenCalled();
   });
+
+  it('submits the form when pressing Enter inside the input field', async () => {
+    const onSuccess = vi.fn();
+    renderWithI18n(<AccountDialog open={true} onClose={() => {}} onSuccess={onSuccess} />);
+    
+    const input = screen.getByLabelText(/account label/i);
+    fireEvent.change(input, { target: { value: 'Enter Key Account' } });
+    
+    fireEvent.submit(input);
+
+    await waitFor(() => {
+      expect(dbService.addAccount).toHaveBeenCalledWith(
+        expect.objectContaining({ label: 'Enter Key Account', id: expect.any(String) })
+      );
+    });
+    expect(onSuccess).toHaveBeenCalled();
+  });
 });

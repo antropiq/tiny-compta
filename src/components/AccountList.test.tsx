@@ -212,4 +212,36 @@ describe('AccountList', () => {
       expect(dbService.updateAccount).toHaveBeenCalled();
     });
   });
+
+  it('selects the previous account when the currently active account is deleted', async () => {
+    vi.mocked(dbService.getAllAccounts).mockResolvedValue([
+      { id: '1', label: 'Account 1' },
+      { id: '2', label: 'Account 2' },
+    ]);
+    
+    renderWithProviders(<AccountList />);
+
+    await waitFor(() => {
+      expect(dbService.getAllAccounts).toHaveBeenCalled();
+    });
+
+    const autocompleteInput = screen.getByPlaceholderText(/select account/i);
+    fireEvent.mouseDown(autocompleteInput);
+    const option = await screen.findByText('Account 2');
+    fireEvent.click(option);
+
+    vi.mocked(dbService.getAllAccounts).mockResolvedValue([
+      { id: '1', label: 'Account 1' },
+    ]);
+
+    const deleteButton = screen.getByRole('button', { name: /delete/i });
+    fireEvent.click(deleteButton);
+
+    const confirmButton = await screen.findByRole('button', { name: /confirm/i });
+    fireEvent.click(confirmButton);
+
+    await waitFor(() => {
+      expect(autocompleteInput).toHaveValue('Account 1');
+    });
+  });
 });

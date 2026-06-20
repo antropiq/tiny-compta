@@ -12,6 +12,7 @@ import type { Transaction } from '../types/transaction';
 
 vi.mock('../services/db', () => ({
   dbService: {
+    getAllAccounts: vi.fn().mockResolvedValue([]),
     getTransactionsByAccountId: vi.fn(),
     addTransaction: vi.fn(),
     updateTransaction: vi.fn(),
@@ -27,6 +28,13 @@ vi.mock('../services/db', () => ({
 
 vi.mock('../hooks/useAccount', () => ({
   useAccount: vi.fn(),
+}));
+
+vi.mock('../providers/ThemeContext', () => ({
+  useAppTheme: () => ({
+    mode: 'dark',
+    toggleTheme: vi.fn(),
+  }),
 }));
 
 const renderWithProviders = (ui: React.ReactElement) => {
@@ -94,7 +102,7 @@ describe('TransactionEditionArea', () => {
     renderWithProviders(<TransactionEditionArea />);
 
     expect(screen.getByText(/select account/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /create/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /create transaction/i })).toBeDisabled();
   });
 
   it('loads and displays transactions when an account is selected', async () => {
@@ -113,7 +121,7 @@ describe('TransactionEditionArea', () => {
   it('opens TransactionEditor in create mode when "Create" button is clicked', async () => {
     renderWithProviders(<TransactionEditionArea />);
 
-    const createButton = screen.getByRole('button', { name: /create/i });
+    const createButton = screen.getByRole('button', { name: /create transaction/i });
     fireEvent.click(createButton);
 
     expect(await screen.findByRole('heading', { name: /create/i })).toBeInTheDocument();
@@ -657,6 +665,42 @@ describe('TransactionEditionArea', () => {
     expect(screen.getByRole('cell', { name: '10' })).toBeInTheDocument();
   });
 
+  it('displays recurring templates sorted by the day of the month column', async () => {
+    const mockRecs = [
+      {
+        id: 'rec-1',
+        accountId: 'account-1',
+        label: 'Internet Subscription',
+        amount: -29.99,
+        dayOfMonth: 15,
+        startDate: '2026-01-01',
+      },
+      {
+        id: 'rec-2',
+        accountId: 'account-1',
+        label: 'Rent',
+        amount: -800.00,
+        dayOfMonth: 5,
+        startDate: '2026-01-01',
+      },
+    ];
+    vi.mocked(dbService.getRecurringsByAccountId).mockResolvedValue(mockRecs);
+
+    renderWithProviders(<TransactionEditionArea />);
+
+    const recurringsTab = screen.getByRole('tab', { name: /recurring payments/i });
+    fireEvent.click(recurringsTab);
+
+    await waitFor(() => {
+      expect(dbService.getRecurringsByAccountId).toHaveBeenCalledWith(mockAccount.id);
+    });
+
+    const tableContainer = document.querySelector('.table-container') as HTMLElement;
+    const tableRows = tableContainer.querySelectorAll('tbody tr');
+    expect(tableRows[0]).toHaveTextContent('Rent');
+    expect(tableRows[1]).toHaveTextContent('Internet Subscription');
+  });
+
   it('prompts to apply recurrings if not already applied for the current month', async () => {
     vi.mocked(dbService.getSettingByKey).mockResolvedValue(undefined); // No applied key
     const mockRecs = [
@@ -675,6 +719,93 @@ describe('TransactionEditionArea', () => {
 
     expect(await screen.findByText(/recurring payments/i, { selector: 'h2' })).toBeInTheDocument();
     expect(screen.getByText(/would you like to apply recurring payments for the month of/i)).toBeInTheDocument();
+  });
+
+  it('does not prompt to apply recurrings if there are no recurrings for the account', async () => {
+    vi.mocked(dbService.getSettingByKey).mockResolvedValue(undefined); // No applied key
+    vi.mocked(dbService.getRecurringsByAccountId).mockResolvedValue([]); // No recurrings
+
+    renderWithProviders(<TransactionEditionArea />);
+
+    await waitFor(() => {
+      expect(dbService.getRecurringsByAccountId).toHaveBeenCalledWith(mockAccount.id);
+    });
+
+    expect(screen.queryByText(/would you like to apply recurring payments for the month of/i)).not.toBeInTheDocument();
+  });
+
+  it('synchronizes recurring transactions on apply: adds new, updates modified, and deletes removed', async () => {
+    vi.mocked(dbService.getSettingByKey).mockResolvedValue(undefined);
+
+    const mockRecs = [
+      {
+        id: 'rec-1',
+        accountId: 'account-1',
+        label: 'Internet (Updated)',
+        amount: -35.00,
+        dayOfMonth: 10,
+        startDate: '2026-01-01',
+      },
+      {
+        id: 'rec-2',
+        accountId: 'account-1',
+        label: 'Gym Subscription',
+        amount: -19.99,
+        dayOfMonth: 15,
+        startDate: '2026-01-01',
+      },
+    ];
+    vi.mocked(dbService.getRecurringsByAccountId).mockResolvedValue(mockRecs);
+
+    const currentMonth = dayjs().format('YYYY-MM');
+    const mockExistingTxs: Transaction[] = [
+      {
+        id: 'tx-old-1',
+        accountId: 'account-1',
+        label: 'Internet',
+        amount: -29.99,
+        dueDate: `${currentMonth}-10`,
+        recurringId: 'rec-1',
+      },
+      {
+        id: 'tx-old-removed',
+        accountId: 'account-1',
+        label: 'Old Removed Subscription',
+        amount: -5.00,
+        dueDate: `${currentMonth}-05`,
+        recurringId: 'rec-removed',
+      },
+    ];
+    vi.mocked(dbService.getTransactionsByAccountId).mockResolvedValue(mockExistingTxs);
+    vi.mocked(dbService.updateTransaction).mockResolvedValue(undefined);
+    vi.mocked(dbService.deleteTransaction).mockResolvedValue(undefined);
+    vi.mocked(dbService.addTransaction).mockResolvedValue(undefined);
+
+    renderWithProviders(<TransactionEditionArea />);
+
+    expect(await screen.findByText(/recurring payments/i, { selector: 'h2' })).toBeInTheDocument();
+    const confirmButton = screen.getByRole('button', { name: /yes/i });
+    fireEvent.click(confirmButton);
+
+    await waitFor(() => {
+      expect(dbService.deleteTransaction).toHaveBeenCalledWith('tx-old-removed');
+    });
+
+    expect(dbService.updateTransaction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'tx-old-1',
+        label: 'Internet (Updated)',
+        amount: -35.00,
+      })
+    );
+
+    expect(dbService.addTransaction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        recurringId: 'rec-2',
+        label: 'Gym Subscription',
+        amount: -19.99,
+      })
+    );
   });
 
   it('shows cascade dialog when deleting a recurring template', async () => {
@@ -699,5 +830,43 @@ describe('TransactionEditionArea', () => {
     fireEvent.click(deleteButton);
 
     expect(screen.getByText(/would you like to keep the existing transactions linked to this recurring payment/i)).toBeInTheDocument();
+  });
+
+  it('updates import/export tooltips and opens recurring dialogs when in recurring payments tab', async () => {
+    const mockRecs = [
+      {
+        id: 'rec-1',
+        accountId: 'account-1',
+        label: 'Internet',
+        amount: -29.99,
+        dayOfMonth: 10,
+        startDate: '2026-01-01',
+      },
+    ];
+    vi.mocked(dbService.getRecurringsByAccountId).mockResolvedValue(mockRecs);
+
+    renderWithProviders(<TransactionEditionArea />);
+
+    // In transactions tab
+    const exportButton = screen.getByRole('button', { name: /export/i });
+    const importButton = screen.getByRole('button', { name: /import/i });
+
+    // Switch to Recurrings Tab
+    const recurringsTab = screen.getByRole('tab', { name: /recurring payments/i });
+    fireEvent.click(recurringsTab);
+
+    // Verify tooltips/labels updated (IconButton is queried by name)
+    expect(screen.getByRole('button', { name: /export/i })).toBeInTheDocument();
+
+    // Trigger export dialog
+    fireEvent.click(exportButton);
+    expect(await screen.findByRole('heading', { name: /Export Recurring Payments/i })).toBeInTheDocument();
+
+    // Close and open import dialog
+    const cancelBtn = screen.getByRole('button', { name: /cancel/i });
+    fireEvent.click(cancelBtn);
+
+    fireEvent.click(importButton);
+    expect(await screen.findByRole('heading', { name: /Import Recurring Payments/i })).toBeInTheDocument();
   });
 });

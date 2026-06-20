@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -10,7 +10,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import type { Account } from '../types/account';
 import { dbService } from '../services/db';
-import { v4 as uuidv4 } from 'uuid';
+import { UuidUtils } from '../utils/uuidUtils';
 
 interface AccountDialogProps {
   open: boolean;
@@ -27,6 +27,20 @@ const AccountDialog: React.FC<AccountDialogProps> = ({
 }) => {
   const { t } = useTranslation();
   const [label, setLabel] = useState(account?.label ?? '');
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setLabel(account?.label ?? '');
+      setTimeout(() => {
+        if (inputRef.current) {
+          inputRef.current.focus();
+          inputRef.current.select();
+        }
+      }, 50);
+    }
+  }, [open, account]);
 
   const handleSave = async () => {
     if (!label.trim()) return;
@@ -36,7 +50,7 @@ const AccountDialog: React.FC<AccountDialogProps> = ({
       updatedAccount = { ...account, label };
       await dbService.updateAccount(updatedAccount);
     } else {
-      updatedAccount = { id: uuidv4(), label };
+      updatedAccount = { id: UuidUtils.generate(), label };
       await dbService.addAccount(updatedAccount);
     }
 
@@ -46,29 +60,37 @@ const AccountDialog: React.FC<AccountDialogProps> = ({
     onClose();
   };
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    handleSave();
+  };
+
   return (
     <Dialog open={open} onClose={onClose}>
-      <DialogTitle>
-        {account ? t('account.edit') : t('account.create')}
-      </DialogTitle>
-      <DialogContent>
-        <TextField
-          autoFocus
-          margin="dense"
-          label={t('account.label')}
-          type="text"
-          fullWidth
-          variant="outlined"
-          value={label}
-          onChange={(e) => setLabel(e.target.value)}
-        />
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>{t('common.cancel')}</Button>
-        <Button onClick={handleSave} variant="contained">
-          {t('common.save')}
-        </Button>
-      </DialogActions>
+      <form onSubmit={handleSubmit}>
+        <DialogTitle>
+          {account ? t('account.edit') : t('account.create')}
+        </DialogTitle>
+        <DialogContent>
+          <TextField
+            inputRef={inputRef}
+            autoFocus
+            margin="dense"
+            label={t('account.label')}
+            type="text"
+            fullWidth
+            variant="outlined"
+            value={label}
+            onChange={(e) => setLabel(e.target.value)}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={onClose}>{t('common.cancel')}</Button>
+          <Button type="submit" variant="contained">
+            {t('common.save')}
+          </Button>
+        </DialogActions>
+      </form>
     </Dialog>
   );
 };
