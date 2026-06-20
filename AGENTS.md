@@ -16,6 +16,7 @@ Tiny Compta is a lightweight, browser-based bank account management application 
 - **Build System:** Vite
 - **Internationalization:** i18next & react-i18next
 - **Testing:** Vitest & React Testing Library
+- **Desktop App:** Tauri v2 (Rust backend + WebView)
 
 ## 3. Technical recommendations
 
@@ -24,3 +25,39 @@ Tiny Compta is a lightweight, browser-based bank account management application 
 - When adding new text, always update the corresponding translation files in `src/locales/{lang}/translation.json` for all supported languages.
 - Always write a test case once a task is done.
 - Definition of done is: build pass, lint pass and a test case is covering the feature.
+
+## 4. Desktop App (Tauri v2)
+
+### Structure
+
+- **Frontend:** React app in `src/` (shared with web build)
+- **Backend:** Rust code in `src-tauri/`
+- **Config:** `src-tauri/tauri.conf.json` (v2 schema)
+- **Capabilities:** `src-tauri/capabilities/migrated.json`
+- **Dependencies:** `src-tauri/Cargo.toml`
+
+### Building
+
+```bash
+# Build web app + desktop binary
+npm run tauri build
+
+# Build with specific bundle targets
+npm run tauri build -- --bundles deb          # Debian package
+npm run tauri build -- --bundles rpm           # RPM package
+NO_STRIP=true npm run tauri build -- --bundles appimage  # AppImage
+npm run tauri build -- --bundles msi           # Windows MSI
+npm run tauri build -- --bundles nsis          # Windows NSIS
+npm run tauri build -- --bundles all           # All available bundles
+
+# Run in development mode with hot-reload
+npm run tauri dev
+```
+
+### Key Points
+
+- Tauri v2 requires explicit `--bundles` flag (no default bundling)
+- AppImage requires `NO_STRIP=true` environment variable
+- Linux requires `webkit2gtk-4.1` system library
+- The `src-tauri/src/main.rs` contains the Tauri entry point and commands
+- Frontend communicates with Rust backend via Tauri's IPC (`@tauri-apps/api`)
