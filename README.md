@@ -8,6 +8,7 @@
 
 - Manage multiple bank accounts
 - Track transactions with labels, descriptions, amounts, and due dates
+- Manage recurring payment plans with custom intervals, start/end dates, and automatic/manual generation
 - Import and export transaction data
 - Real-time balance calculation
 - Persistent storage via IndexedDB

@@ -11,7 +11,9 @@
     "confirm": "Confirmer",
     "confirm_title": "Confirmer",
     "save": "Enregistrer",
-    "close": "Fermer"
+    "close": "Fermer",
+    "yes": "Oui",
+    "no": "Non"
   },
   "account": {
     "create": "Créer un compte",
@@ -81,5 +83,26 @@
     "error_invalid_format": "Le contenu JSON ne suit pas la bonne structure",
     "error_invalid_data": "Données invalides dans une ou plusieurs transactions. Importation annulée.",
     "error_file_read": "Échec de la lecture du fichier"
+  },
+  "tabs": {
+    "transactions": "Transactions",
+    "recurrings": "Paiements Récurrents"
+  },
+  "recurring": {
+    "title": "Modèles de Récurrents",
+    "create": "Ajouter un paiement récurrent",
+    "edit": "Modifier le paiement récurrent",
+    "delete": "Supprimer le paiement récurrent",
+    "dayOfMonth": "Jour du mois",
+    "startDate": "Date de début d'effet",
+    "endDate": "Date de fin (optionnelle)",
+    "apply_to_selected_month": "Appliquer au mois sélectionné",
+    "apply_success": "Les paiements récurrents ont bien été appliqués pour {{date}}",
+    "apply_prompt_title": "Paiements Récurrents",
+    "apply_prompt_message": "Souhaitez-vous appliquer les paiements récurrents pour le mois de {{month}} ?",
+    "delete_prompt_message": "Souhaitez-vous conserver les transactions liées à ce récurrent ou bien les supprimer en même temps ?",
+    "delete_prompt_keep": "Conserver",
+    "delete_prompt_delete": "Supprimer",
+    "update_cascade_prompt": "Le montant du récurrent a été modifié : souhaitez-vous appliquer ce nouveau montant aux transactions restantes (mois en cours et futurs) ?"
   }
 }

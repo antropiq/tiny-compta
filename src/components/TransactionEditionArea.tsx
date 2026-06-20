@@ -1,15 +1,21 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Box, Paper, Table, TableBody, TableCell, TableHead, TableRow, IconButton, Tooltip, Snackbar, Alert, useTheme, Checkbox } from '@mui/material';
+import { Box, Paper, Table, TableBody, TableCell, TableHead, TableRow, IconButton, Tooltip, Snackbar, Alert, useTheme, Checkbox, Tabs, Tab } from '@mui/material';
 import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
 import { ContentCopy, Edit, Delete, Download, Upload } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import type { Transaction } from '../types/transaction';
+import type { Recurring } from '../types/recurring';
 import { useAccount } from '../hooks/useAccount';
 import { dbService } from '../services/db';
 import TransactionEditor from './TransactionEditor';
 import type { TransactionEditorMode } from './TransactionEditor';
 import TransactionToolbar from './TransactionToolbar';
+import RecurringToolbar from './RecurringToolbar';
+import RecurringEditor from './RecurringEditor';
+import RecurringDeleteCascadeDialog from './RecurringDeleteCascadeDialog';
+import RecurringUpdateCascadeDialog from './RecurringUpdateCascadeDialog';
+import RecurringApplyPromptDialog from './RecurringApplyPromptDialog';
 import ConfirmDialog from './ConfirmDialog';
 import ExportTransactionDialog from './ExportTransactionDialog';
 import ImportTransactionDialog from './ImportTransactionDialog';
@@ -22,6 +28,7 @@ import Logo from './logo';
 import { FormatUtils } from '../utils/formatUtils';
 import { UuidUtils } from '../utils/uuidUtils';
 import { handleRangeSelection } from '../utils/selectionUtils';
+import { RecurringUtils } from '../utils/recurringUtils';
 
 const TransactionEditionArea: React.FC = () => {
   const { t } = useTranslation();
@@ -51,6 +58,21 @@ const TransactionEditionArea: React.FC = () => {
     severity: 'info',
   });
 
+  const { i18n } = useTranslation();
+  const [activeTab, setActiveTab] = useState(0);
+  const [recurrings, setRecurrings] = useState<Recurring[]>([]);
+  const [recurringsVersion, setRecurringsVersion] = useState(0);
+  const [isRecurringEditorOpen, setIsRecurringEditorOpen] = useState(false);
+  const [recurringEditorMode, setRecurringEditorMode] = useState<'create' | 'edit'>('create');
+  const [recurringToEdit, setRecurringToEdit] = useState<Recurring | undefined>(undefined);
+  const [isRecurringDeleteCascadeOpen, setIsRecurringDeleteCascadeOpen] = useState(false);
+  const [recurringToDelete, setRecurringToDelete] = useState<Recurring | undefined>(undefined);
+  const [isRecurringUpdateCascadeOpen, setIsRecurringUpdateCascadeOpen] = useState(false);
+  const [tempRecurringUpdateData, setTempRecurringUpdateData] = useState<Recurring | undefined>(undefined);
+  const [isApplyPromptOpen, setIsApplyPromptOpen] = useState(false);
+  const [applyPromptMonth, setApplyPromptMonth] = useState('');
+  const [applyPromptMonthName, setApplyPromptMonthName] = useState('');
+
   const fetchTransactions = useCallback(async () => {
     if (!selectedAccount) {
       return [];
@@ -63,6 +85,13 @@ const TransactionEditionArea: React.FC = () => {
     setDatabaseTransactions(transactions);
   }, [fetchTransactions]);
 
+  const fetchRecurrings = useCallback(async () => {
+    if (!selectedAccount) {
+      return [];
+    }
+    return await dbService.getRecurringsByAccountId(selectedAccount.id);
+  }, [selectedAccount]);
+
   useEffect(() => {
     let isMounted = true;
     fetchTransactions().then((transactions) => {
@@ -74,6 +103,18 @@ const TransactionEditionArea: React.FC = () => {
       isMounted = false;
     };
   }, [fetchTransactions, transactionsVersion]);
+
+  useEffect(() => {
+    let isMounted = true;
+    fetchRecurrings().then((data) => {
+      if (isMounted) {
+        setRecurrings(data);
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, [fetchRecurrings, recurringsVersion]);
 
   const viewableTransactions = useMemo(() => {
     if (databaseTransactions.length === 0) {
@@ -152,6 +193,158 @@ const TransactionEditionArea: React.FC = () => {
     setTransactionToDelete(undefined);
     setIsConfirmDialogOpen(false);
   };
+
+  const handleAddRecurring = () => {
+    if (!selectedAccount) return;
+    setRecurringEditorMode('create');
+    setRecurringToEdit(undefined);
+    setIsRecurringEditorOpen(true);
+  };
+
+  const handleEditRecurring = (rec: Recurring) => {
+    setRecurringEditorMode('edit');
+    setRecurringToEdit(rec);
+    setIsRecurringEditorOpen(true);
+  };
+
+  const handleSaveRecurring = async (newRecurring: Recurring) => {
+    if (recurringEditorMode === 'create') {
+      await dbService.addRecurring(newRecurring);
+      setRecurringsVersion(v => v + 1);
+    } else {
+      if (recurringToEdit && recurringToEdit.amount !== newRecurring.amount) {
+        setTempRecurringUpdateData(newRecurring);
+        setIsRecurringUpdateCascadeOpen(true);
+      } else {
+        await dbService.updateRecurring(newRecurring);
+        setRecurringsVersion(v => v + 1);
+      }
+    }
+  };
+
+  const handleConfirmUpdateCascade = async (applyCascade: boolean) => {
+    if (!tempRecurringUpdateData) return;
+
+    await dbService.updateRecurring(tempRecurringUpdateData);
+
+    if (applyCascade) {
+      const firstDayOfCurrentMonth = dayjs().startOf('month').format('YYYY-MM-DD');
+      const accountTxs = await dbService.getTransactionsByAccountId(tempRecurringUpdateData.accountId);
+      const remainingTxs = accountTxs.filter(tx => 
+        tx.recurringId === tempRecurringUpdateData.id && 
+        (tx.dueDate > firstDayOfCurrentMonth || tx.dueDate === firstDayOfCurrentMonth)
+      );
+
+      for (const tx of remainingTxs) {
+        await dbService.updateTransaction({
+          ...tx,
+          amount: tempRecurringUpdateData.amount,
+        });
+      }
+      setTransactionsVersion(v => v + 1);
+      await refreshTransactions();
+    }
+
+    setRecurringsVersion(v => v + 1);
+    setTempRecurringUpdateData(undefined);
+    setIsRecurringUpdateCascadeOpen(false);
+  };
+
+  const handleDeleteRecurring = (rec: Recurring) => {
+    setRecurringToDelete(rec);
+    setIsRecurringDeleteCascadeOpen(true);
+  };
+
+  const handleConfirmDeleteCascade = async (action: 'keep' | 'delete') => {
+    if (!recurringToDelete) return;
+
+    if (action === 'delete') {
+      const accountTxs = await dbService.getTransactionsByAccountId(recurringToDelete.accountId);
+      const linkedTxs = accountTxs.filter(tx => tx.recurringId === recurringToDelete.id);
+      for (const tx of linkedTxs) {
+        await dbService.deleteTransaction(tx.id);
+      }
+      setTransactionsVersion(v => v + 1);
+      await refreshTransactions();
+    } else if (action === 'keep') {
+      const accountTxs = await dbService.getTransactionsByAccountId(recurringToDelete.accountId);
+      const linkedTxs = accountTxs.filter(tx => tx.recurringId === recurringToDelete.id);
+      for (const tx of linkedTxs) {
+        await dbService.updateTransaction({
+          ...tx,
+          recurringId: undefined,
+        });
+      }
+      setTransactionsVersion(v => v + 1);
+      await refreshTransactions();
+    }
+
+    await dbService.deleteRecurring(recurringToDelete.id);
+    setRecurringsVersion(v => v + 1);
+
+    setRecurringToDelete(undefined);
+    setIsRecurringDeleteCascadeOpen(false);
+  };
+
+  const applyRecurringsForMonth = async (monthStr: string) => {
+    if (!selectedAccount) return;
+    const accountRecurrings = await dbService.getRecurringsByAccountId(selectedAccount.id);
+    if (accountRecurrings.length === 0) return;
+
+    const generatedTxs = RecurringUtils.generateTransactionsForMonth(accountRecurrings, monthStr);
+    for (const tx of generatedTxs) {
+      await dbService.addTransaction(tx);
+    }
+
+    const appliedKey = `applied_recurrings_${selectedAccount.id}_${monthStr}`;
+    await dbService.setSetting(appliedKey, 'true');
+
+    setTransactionsVersion(v => v + 1);
+    await refreshTransactions();
+
+    handleOpenSnackbar(t('recurring.apply_success', { date: monthStr }), 'success');
+  };
+
+  const handleApplyRecurringsToSelectedMonth = async () => {
+    if (!selectedAccount || !selectedDate) return;
+    const monthStr = selectedDate.format('YYYY-MM');
+    await applyRecurringsForMonth(monthStr);
+  };
+
+  const checkAutoApplyRecurrings = useCallback(async () => {
+    if (!selectedAccount) return;
+
+    const today = dayjs();
+    const currentMonthStr = today.format('YYYY-MM');
+    const currentMonthKey = `applied_recurrings_${selectedAccount.id}_${currentMonthStr}`;
+
+    const currentMonthSetting = await dbService.getSettingByKey(currentMonthKey);
+    if (!currentMonthSetting || currentMonthSetting.value !== 'true') {
+      setApplyPromptMonth(currentMonthStr);
+      setApplyPromptMonthName(today.locale(i18n.language).format('MMMM YYYY'));
+      setIsApplyPromptOpen(true);
+      return;
+    }
+
+    const daysInMonth = today.daysInMonth();
+    const isLast5Days = today.date() > (daysInMonth - 5);
+    if (isLast5Days) {
+      const nextMonth = today.add(1, 'month');
+      const nextMonthStr = nextMonth.format('YYYY-MM');
+      const nextMonthKey = `applied_recurrings_${selectedAccount.id}_${nextMonthStr}`;
+      const nextMonthSetting = await dbService.getSettingByKey(nextMonthKey);
+      if (!nextMonthSetting || nextMonthSetting.value !== 'true') {
+        setApplyPromptMonth(nextMonthStr);
+        setApplyPromptMonthName(nextMonth.locale(i18n.language).format('MMMM YYYY'));
+        setIsApplyPromptOpen(true);
+      }
+    }
+  }, [selectedAccount, i18n.language]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    checkAutoApplyRecurrings();
+  }, [selectedAccount, checkAutoApplyRecurrings]);
 
   const handleRemoveSelected = () => {
     setConfirmMessage(t('transaction.remove_selected_confirmation'));
@@ -296,77 +489,139 @@ const TransactionEditionArea: React.FC = () => {
       </Paper>
 
       <Paper className="right-container" elevation={0} variant="outlined">
-        <TransactionToolbar 
-          onAddTransaction={handleAddTransaction} 
-          onFilterClick={handleOpenFilterDialog} 
-          onRemoveSelected={handleRemoveSelected}
-          onCloneSelected={handleCloneSelected}
-          disabled={!selectedAccount} 
-          hasSelectedTransactions={selectedTransactions.length > 0}
-          selectedTransactionsCount={selectedTransactions.length}
-          searchLabel={searchLabel} 
-          onSearchLabelChange={setSearchLabel} 
-        />
-        <Box className="table-container">
-          <Table size="small" sx={{ fontSize: '0.875rem' }} stickyHeader>
-              <TableHead>
-                <TableRow>
-                  <TableCell className="indicator-cell-header" />
-                  <TableCell className="checkbox-cell-header">
-                    <Checkbox
-                      indeterminate={selectedTransactions.length > 0 && selectedTransactions.length < viewableTransactions.length && viewableTransactions.length > 0}
-                      checked={selectAll}
-                      onChange={handleToggleSelectAll}
-                      size="small"
-                      aria-label={t('transaction.select_all')}
-                      data-testid="select-all-checkbox"
-                    />
-                  </TableCell>
-                  <TableCell>{t('transaction.dueDate')}</TableCell>
-                  <TableCell>{t('transaction.label')}</TableCell>
-                  <TableCell>{t('transaction.description')}</TableCell>
-                  <TableCell align="right">{t('transaction.amount')}</TableCell>
-                  <TableCell align="right" className="actions-cell">{t('transaction.actions')}</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {viewableTransactions.map((transaction) => {
-                  const isToday = dayjs(transaction.dueDate).isSame(dayjs(), 'day');
-                  const isSelected = selectedTransactions.some(t => t.id === transaction.id);
-                  return (
-                    <TableRow key={transaction.id} className={transaction.amount > 0 ? 'row-positive' : 'row-default'}>
-                      <TableCell className={`indicator-cell ${isToday ? 'indicator-cell-today' : ''}`} />
-                      <TableCell className="checkbox-cell">
+        <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
+          <Tabs value={activeTab} onChange={(_e, newValue) => setActiveTab(newValue)} aria-label="tabs">
+            <Tab label={t('tabs.transactions')} />
+            <Tab label={t('tabs.recurrings')} />
+          </Tabs>
+        </Box>
+
+        {activeTab === 0 && (
+          <>
+            <TransactionToolbar 
+              onAddTransaction={handleAddTransaction} 
+              onFilterClick={handleOpenFilterDialog} 
+              onRemoveSelected={handleRemoveSelected}
+              onCloneSelected={handleCloneSelected}
+              disabled={!selectedAccount} 
+              hasSelectedTransactions={selectedTransactions.length > 0}
+              selectedTransactionsCount={selectedTransactions.length}
+              searchLabel={searchLabel} 
+              onSearchLabelChange={setSearchLabel} 
+            />
+            <Box className="table-container">
+              <Table size="small" sx={{ fontSize: '0.875rem' }} stickyHeader>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell className="indicator-cell-header" />
+                      <TableCell className="checkbox-cell-header">
                         <Checkbox
-                          checked={isSelected}
-                          onChange={(e) => handleToggleTransaction(transaction, e)}
+                          indeterminate={selectedTransactions.length > 0 && selectedTransactions.length < viewableTransactions.length && viewableTransactions.length > 0}
+                          checked={selectAll}
+                          onChange={handleToggleSelectAll}
                           size="small"
-                          aria-label={t('transaction.select')}
-                          data-testid={`checkbox-${transaction.id}`}
+                          aria-label={t('transaction.select_all')}
+                          data-testid="select-all-checkbox"
                         />
                       </TableCell>
-                      <TableCell>{FormatUtils.date(transaction.dueDate)}</TableCell>
-                      <TableCell>{transaction.label}</TableCell>
-                      <TableCell>{transaction.description}</TableCell>
-                      <TableCell align="right">{FormatUtils.currency(transaction.amount)}</TableCell>
-                      <TableCell className="actions-cell" align="right">
-                        <IconButton size="small" onClick={() => handleCloneTransaction(transaction)} aria-label="clone transaction"><ContentCopy fontSize="small" /></IconButton>
-                        <IconButton size="small" onClick={() => handleEditTransaction(transaction)} aria-label="edit transaction"><Edit fontSize="small" /></IconButton>
-                        <IconButton size="small" onClick={() => handleDeleteTransaction(transaction)} aria-label="delete transaction"><Delete fontSize="small" /></IconButton>
+                      <TableCell>{t('transaction.dueDate')}</TableCell>
+                      <TableCell>{t('transaction.label')}</TableCell>
+                      <TableCell>{t('transaction.description')}</TableCell>
+                      <TableCell align="right">{t('transaction.amount')}</TableCell>
+                      <TableCell align="right" className="actions-cell">{t('transaction.actions')}</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {viewableTransactions.map((transaction) => {
+                      const isToday = dayjs(transaction.dueDate).isSame(dayjs(), 'day');
+                      const isSelected = selectedTransactions.some(t => t.id === transaction.id);
+                      return (
+                        <TableRow key={transaction.id} className={transaction.amount > 0 ? 'row-positive' : 'row-default'}>
+                          <TableCell className={`indicator-cell ${isToday ? 'indicator-cell-today' : ''}`} />
+                          <TableCell className="checkbox-cell">
+                            <Checkbox
+                              checked={isSelected}
+                              onChange={(e) => handleToggleTransaction(transaction, e)}
+                              size="small"
+                              aria-label={t('transaction.select')}
+                              data-testid={`checkbox-${transaction.id}`}
+                            />
+                          </TableCell>
+                          <TableCell>{FormatUtils.date(transaction.dueDate)}</TableCell>
+                          <TableCell>{transaction.label}</TableCell>
+                          <TableCell>{transaction.description}</TableCell>
+                          <TableCell align="right">{FormatUtils.currency(transaction.amount)}</TableCell>
+                          <TableCell className="actions-cell" align="right">
+                            <IconButton size="small" onClick={() => handleCloneTransaction(transaction)} aria-label="clone transaction"><ContentCopy fontSize="small" /></IconButton>
+                            <IconButton size="small" onClick={() => handleEditTransaction(transaction)} aria-label="edit transaction"><Edit fontSize="small" /></IconButton>
+                            <IconButton size="small" onClick={() => handleDeleteTransaction(transaction)} aria-label="delete transaction"><Delete fontSize="small" /></IconButton>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                    {viewableTransactions.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={7} align="center">
+                          {selectedAccount ? t('transaction.no_transactions') : t('account.select')}
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+            </Box>
+          </>
+        )}
+
+        {activeTab === 1 && (
+          <>
+            <RecurringToolbar
+              onAddRecurring={handleAddRecurring}
+              onApplyToSelectedMonth={handleApplyRecurringsToSelectedMonth}
+              disabled={!selectedAccount}
+            />
+            <Box className="table-container">
+              <Table size="small" sx={{ fontSize: '0.875rem' }} stickyHeader>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>{t('transaction.label')}</TableCell>
+                    <TableCell>{t('transaction.description')}</TableCell>
+                    <TableCell align="right">{t('transaction.amount')}</TableCell>
+                    <TableCell align="right">{t('recurring.dayOfMonth')}</TableCell>
+                    <TableCell>{t('recurring.startDate')} - {t('recurring.endDate')}</TableCell>
+                    <TableCell align="right" className="actions-cell">{t('transaction.actions')}</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {recurrings.map((rec) => {
+                    return (
+                      <TableRow key={rec.id} className={rec.amount > 0 ? 'row-positive' : 'row-default'}>
+                        <TableCell>{rec.label}</TableCell>
+                        <TableCell>{rec.description}</TableCell>
+                        <TableCell align="right">{FormatUtils.currency(rec.amount)}</TableCell>
+                        <TableCell align="right">{rec.dayOfMonth}</TableCell>
+                        <TableCell>
+                          {FormatUtils.date(rec.startDate)}
+                          {rec.endDate ? ` - ${FormatUtils.date(rec.endDate)}` : ''}
+                        </TableCell>
+                        <TableCell className="actions-cell" align="right">
+                          <IconButton size="small" onClick={() => handleEditRecurring(rec)} aria-label="edit recurring"><Edit fontSize="small" /></IconButton>
+                          <IconButton size="small" onClick={() => handleDeleteRecurring(rec)} aria-label="delete recurring"><Delete fontSize="small" /></IconButton>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                  {recurrings.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={6} align="center">
+                        {selectedAccount ? t('transaction.no_transactions') : t('account.select')}
                       </TableCell>
                     </TableRow>
-                  );
-                })}
-                {viewableTransactions.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={7} align="center">
-                      {selectedAccount ? t('transaction.no_transactions') : t('account.select')}
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-        </Box>
+                  )}
+                </TableBody>
+              </Table>
+            </Box>
+          </>
+        )}
       </Paper>
 
       <TransactionEditor
@@ -375,6 +630,15 @@ const TransactionEditionArea: React.FC = () => {
         onSave={handleSaveTransaction}
         mode={editorMode}
         transaction={transactionToEdit}
+        accountId={selectedAccount?.id || ''}
+      />
+
+      <RecurringEditor
+        open={isRecurringEditorOpen}
+        onClose={() => setIsRecurringEditorOpen(false)}
+        onSave={handleSaveRecurring}
+        mode={recurringEditorMode}
+        recurring={recurringToEdit}
         accountId={selectedAccount?.id || ''}
       />
 
@@ -390,6 +654,28 @@ const TransactionEditionArea: React.FC = () => {
         onClose={() => setIsRemoveSelectedDialogOpen(false)}
         onConfirm={handleConfirmRemoveSelected}
         message={confirmMessage}
+      />
+
+      <RecurringDeleteCascadeDialog
+        open={isRecurringDeleteCascadeOpen}
+        onClose={() => setIsRecurringDeleteCascadeOpen(false)}
+        onConfirm={handleConfirmDeleteCascade}
+      />
+
+      <RecurringUpdateCascadeDialog
+        open={isRecurringUpdateCascadeOpen}
+        onClose={() => setIsRecurringUpdateCascadeOpen(false)}
+        onConfirm={handleConfirmUpdateCascade}
+      />
+
+      <RecurringApplyPromptDialog
+        open={isApplyPromptOpen}
+        onClose={() => setIsApplyPromptOpen(false)}
+        onConfirm={() => {
+          applyRecurringsForMonth(applyPromptMonth);
+          setIsApplyPromptOpen(false);
+        }}
+        monthName={applyPromptMonthName}
       />
 
       <ExportTransactionDialog

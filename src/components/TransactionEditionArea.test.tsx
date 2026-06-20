@@ -16,6 +16,12 @@ vi.mock('../services/db', () => ({
     addTransaction: vi.fn(),
     updateTransaction: vi.fn(),
     deleteTransaction: vi.fn(),
+    getRecurringsByAccountId: vi.fn(),
+    addRecurring: vi.fn(),
+    updateRecurring: vi.fn(),
+    deleteRecurring: vi.fn(),
+    getSettingByKey: vi.fn(),
+    setSetting: vi.fn(),
   },
 }));
 
@@ -69,6 +75,8 @@ describe('TransactionEditionArea', () => {
       setSelectedTransactions: vi.fn()
     });
     vi.mocked(dbService.getTransactionsByAccountId).mockResolvedValue(mockTransactions);
+    vi.mocked(dbService.getRecurringsByAccountId).mockResolvedValue([]);
+    vi.mocked(dbService.getSettingByKey).mockResolvedValue({ id: 's1', key: 'applied_recurrings_account-1_2026-06', value: 'true' });
   });
 
   it('shows "select account" message when no account is selected', async () => {
@@ -619,5 +627,77 @@ describe('TransactionEditionArea', () => {
     await waitFor(() => {
       expect(dbService.deleteTransaction).toHaveBeenCalledWith('tx-1');
     });
+  });
+
+  it('allows switching to Recurring Payments tab and displays recurring templates', async () => {
+    const mockRecs = [
+      {
+        id: 'rec-1',
+        accountId: 'account-1',
+        label: 'Internet Subscription',
+        description: 'Monthly Fiber',
+        amount: -29.99,
+        dayOfMonth: 10,
+        startDate: '2026-01-01',
+      },
+    ];
+    vi.mocked(dbService.getRecurringsByAccountId).mockResolvedValue(mockRecs);
+
+    renderWithProviders(<TransactionEditionArea />);
+
+    const recurringsTab = screen.getByRole('tab', { name: /recurring payments/i });
+    fireEvent.click(recurringsTab);
+
+    await waitFor(() => {
+      expect(dbService.getRecurringsByAccountId).toHaveBeenCalledWith(mockAccount.id);
+    });
+
+    expect(screen.getByText('Internet Subscription')).toBeInTheDocument();
+    expect(screen.getByText('Monthly Fiber')).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: '10' })).toBeInTheDocument();
+  });
+
+  it('prompts to apply recurrings if not already applied for the current month', async () => {
+    vi.mocked(dbService.getSettingByKey).mockResolvedValue(undefined); // No applied key
+    const mockRecs = [
+      {
+        id: 'rec-1',
+        accountId: 'account-1',
+        label: 'Internet Subscription',
+        amount: -29.99,
+        dayOfMonth: 10,
+        startDate: '2026-01-01',
+      },
+    ];
+    vi.mocked(dbService.getRecurringsByAccountId).mockResolvedValue(mockRecs);
+
+    renderWithProviders(<TransactionEditionArea />);
+
+    expect(await screen.findByText(/recurring payments/i, { selector: 'h2' })).toBeInTheDocument();
+    expect(screen.getByText(/would you like to apply recurring payments for the month of/i)).toBeInTheDocument();
+  });
+
+  it('shows cascade dialog when deleting a recurring template', async () => {
+    const mockRecs = [
+      {
+        id: 'rec-1',
+        accountId: 'account-1',
+        label: 'Internet',
+        amount: -29.99,
+        dayOfMonth: 10,
+        startDate: '2026-01-01',
+      },
+    ];
+    vi.mocked(dbService.getRecurringsByAccountId).mockResolvedValue(mockRecs);
+
+    renderWithProviders(<TransactionEditionArea />);
+
+    const recurringsTab = screen.getByRole('tab', { name: /recurring payments/i });
+    fireEvent.click(recurringsTab);
+
+    const deleteButton = await screen.findByRole('button', { name: /delete recurring/i });
+    fireEvent.click(deleteButton);
+
+    expect(screen.getByText(/would you like to keep the existing transactions linked to this recurring payment/i)).toBeInTheDocument();
   });
 });

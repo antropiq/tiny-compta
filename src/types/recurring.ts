@@ -1,9 +1,10 @@
-export type Transaction = {
+export type Recurring = {
   id: string;
   accountId: string;
   label: string;
   description?: string;
   amount: number;
-  dueDate: string;
-  recurringId?: string;
+  dayOfMonth: number;
+  startDate: string;
+  endDate?: string;
 };
