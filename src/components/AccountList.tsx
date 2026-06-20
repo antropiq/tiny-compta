@@ -60,10 +60,16 @@ const AccountList: React.FC = () => {
 
   const handleConfirmDelete = async () => {
     if (accountToDelete) {
+      const deletedIndex = accounts.findIndex(acc => acc.id === accountToDelete.id);
       await dbService.deleteAccount(accountToDelete.id);
-      await loadAccounts();
+      const remainingAccounts = await loadAccounts();
       if (selectedAccount?.id === accountToDelete.id) {
-        setSelectedAccount(null);
+        if (remainingAccounts.length > 0) {
+          const newSelectedIndex = deletedIndex > 0 ? deletedIndex - 1 : 0;
+          setSelectedAccount(remainingAccounts[newSelectedIndex]);
+        } else {
+          setSelectedAccount(null);
+        }
       }
     }
     handleConfirmDialogClose();
@@ -77,7 +83,7 @@ const AccountList: React.FC = () => {
   };
 
   return (
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, width: '100%' }}>
       <Autocomplete
         options={accounts}
         getOptionLabel={(option) => option.label}
@@ -91,7 +97,7 @@ const AccountList: React.FC = () => {
         renderInput={(params) => (
           <TextField {...params} size="small" placeholder={t('account.select')} />
         )}
-        sx={{ width: 250 }}
+        sx={{ flexGrow: 1, minWidth: 120 }}
       />
       <Tooltip title={t('account.create')}>
         <IconButton onClick={() => handleAccountDialogOpen()}>

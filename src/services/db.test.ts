@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { dbService } from './db';
 import type { Account } from '../types/account';
 import type { Transaction } from '../types/transaction';
+import type { Recurring } from '../types/recurring';
 
 describe('DatabaseService', () => {
   beforeEach(async () => {
@@ -17,6 +18,10 @@ describe('DatabaseService', () => {
     const transactions = await dbService.getAllTransactions();
     for (const tx of transactions) {
       await dbService.deleteTransaction(tx.id);
+    }
+    const recurrings = await dbService.getAllRecurrings();
+    for (const rec of recurrings) {
+      await dbService.deleteRecurring(rec.id);
     }
     const settings = await dbService.getAllSettings();
     for (const setting of settings) {
@@ -145,5 +150,74 @@ describe('DatabaseService', () => {
     await dbService.deleteSetting(setting!.id);
     const retrieved = await dbService.getSettingByKey('test_key');
     expect(retrieved).toBeUndefined();
+  });
+
+  it('should add, get and update a recurring payment template', async () => {
+    const account: Account = { id: 'acc-1', label: 'Acc 1' };
+    await dbService.addAccount(account);
+
+    const recurring: Recurring = {
+      id: 'rec-1',
+      accountId: 'acc-1',
+      label: 'Electricity Subscription',
+      amount: -50.5,
+      dayOfMonth: 15,
+      startDate: '2026-01-01',
+    };
+    await dbService.addRecurring(recurring);
+
+    const retrieved = await dbService.getRecurring('rec-1');
+    expect(retrieved).toEqual(recurring);
+
+    const updated: Recurring = { ...recurring, amount: -55.0 };
+    await dbService.updateRecurring(updated);
+
+    const retrievedUpdated = await dbService.getRecurring('rec-1');
+    expect(retrievedUpdated?.amount).toBe(-55.0);
+  });
+
+  it('should get recurrings by account id', async () => {
+    const acc1: Account = { id: 'acc-1', label: 'Acc 1' };
+    const acc2: Account = { id: 'acc-2', label: 'Acc 2' };
+    await dbService.addAccount(acc1);
+    await dbService.addAccount(acc2);
+
+    const rec1: Recurring = { id: 'rec-1', accountId: 'acc-1', label: 'R1', amount: 10, dayOfMonth: 5, startDate: '2026-01-01' };
+    const rec2: Recurring = { id: 'rec-2', accountId: 'acc-1', label: 'R2', amount: 20, dayOfMonth: 10, startDate: '2026-01-01' };
+    const rec3: Recurring = { id: 'rec-3', accountId: 'acc-2', label: 'R3', amount: 30, dayOfMonth: 15, startDate: '2026-01-01' };
+
+    await dbService.addRecurring(rec1);
+    await dbService.addRecurring(rec2);
+    await dbService.addRecurring(rec3);
+
+    const acc1Recs = await dbService.getRecurringsByAccountId('acc-1');
+    expect(acc1Recs).toHaveLength(2);
+    expect(acc1Recs).toContainEqual(rec1);
+    expect(acc1Recs).toContainEqual(rec2);
+  });
+
+  it('should delete a recurring payment template and cascading delete from account', async () => {
+    const account: Account = { id: 'acc-1', label: 'Acc 1' };
+    await dbService.addAccount(account);
+
+    const recurring: Recurring = {
+      id: 'rec-1',
+      accountId: 'acc-1',
+      label: 'Electricity Subscription',
+      amount: -50.5,
+      dayOfMonth: 15,
+      startDate: '2026-01-01',
+    };
+    await dbService.addRecurring(recurring);
+
+    await dbService.deleteRecurring('rec-1');
+    const retrieved = await dbService.getRecurring('rec-1');
+    expect(retrieved).toBeUndefined();
+
+    // Test cascading delete
+    await dbService.addRecurring(recurring);
+    await dbService.deleteAccount('acc-1');
+    const retrievedCascade = await dbService.getRecurring('rec-1');
+    expect(retrievedCascade).toBeUndefined();
   });
 });

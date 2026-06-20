@@ -1,55 +1,64 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Box, Paper, Table, TableBody, TableCell, TableHead, TableRow, IconButton, Tooltip, Snackbar, Alert, useTheme, Checkbox } from '@mui/material';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Box, Paper, IconButton, Tooltip, Snackbar, Alert, useTheme, Tabs, Tab, Select, MenuItem } from '@mui/material';
+import type { SelectChangeEvent } from '@mui/material';
 import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
-import { ContentCopy, Edit, Delete, Download, Upload } from '@mui/icons-material';
+import { Download, Upload, Brightness4, Brightness7 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import type { Transaction } from '../types/transaction';
+import type { Recurring } from '../types/recurring';
 import { useAccount } from '../hooks/useAccount';
 import { dbService } from '../services/db';
-import TransactionEditor from './TransactionEditor';
-import type { TransactionEditorMode } from './TransactionEditor';
-import TransactionToolbar from './TransactionToolbar';
-import ConfirmDialog from './ConfirmDialog';
+import { useAppTheme } from '../providers/ThemeContext';
+import AccountList from './AccountList';
+import RecurringApplyPromptDialog from './RecurringApplyPromptDialog';
 import ExportTransactionDialog from './ExportTransactionDialog';
 import ImportTransactionDialog from './ImportTransactionDialog';
-import TransactionFilterDialog from './TransactionFilterDialog';
-import TransactionCloningDialog from './TransactionCloningDialog';
-import { monthlyViewFilter, nextMonthViewFilter } from '../filters';
-import type { Filterable } from '../types/filter';
+import ExportRecurringDialog from './ExportRecurringDialog';
+import ImportRecurringDialog from './ImportRecurringDialog';
+import TransactionsTab from './TransactionsTab';
+import RecurringsTab from './RecurringsTab';
 import './TransactionEditionArea.css';
 import Logo from './logo';
-import { FormatUtils } from '../utils/formatUtils';
-import { UuidUtils } from '../utils/uuidUtils';
-import { handleRangeSelection } from '../utils/selectionUtils';
+import { RecurringUtils } from '../utils/recurringUtils';
 
 const TransactionEditionArea: React.FC = () => {
-  const { t } = useTranslation();
-  const { selectedAccount, selectedDate, setSelectedDate, setTransactionsVersion, transactionsVersion, selectedTransactions, setSelectedTransactions } = useAccount();
+  const { t, i18n } = useTranslation();
+  const { selectedAccount, selectedDate, setSelectedDate, setTransactionsVersion, transactionsVersion } = useAccount();
   const theme = useTheme();
+  const { mode, toggleTheme } = useAppTheme();
   const primaryColor = theme.palette?.primary?.main || "#D4AF37";
 
+  const handleLanguageChange = async (event: SelectChangeEvent) => {
+    const newLang = event.target.value;
+    await dbService.setSetting('selected_language', newLang);
+    window.location.reload();
+  };
+
   const [databaseTransactions, setDatabaseTransactions] = useState<Transaction[]>([]);
-  const [isEditorOpen, setIsEditorOpen] = useState(false);
-  const [editorMode, setEditorMode] = useState<TransactionEditorMode>('create');
-  const [transactionToEdit, setTransactionToEdit] = useState<Transaction | undefined>(undefined);
-  const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
-  const [isCloningDialogOpen, setIsCloningDialogOpen] = useState(false);
-  const [transactionToClone, setTransactionToClone] = useState<Transaction | undefined>(undefined);
-  const [filters, setFilters] = useState<Filterable[]>([monthlyViewFilter, nextMonthViewFilter]);
-  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
-  const [transactionToDelete, setTransactionToDelete] = useState<Transaction | undefined>(undefined);
-  const [confirmMessage, setConfirmMessage] = useState('');
-  const [isRemoveSelectedDialogOpen, setIsRemoveSelectedDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState(0);
+  const [recurrings, setRecurrings] = useState<Recurring[]>([]);
+  const [recurringsVersion, setRecurringsVersion] = useState(0);
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
-  const [searchLabel, setSearchLabel] = useState('');
-  const [selectAll, setSelectAll] = useState(false);
   const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' | 'warning' | 'info' }>({
     open: false,
     message: '',
     severity: 'info',
   });
+
+
+  const [isApplyPromptOpen, setIsApplyPromptOpen] = useState(false);
+  const [applyPromptMonth, setApplyPromptMonth] = useState('');
+  const [applyPromptMonthName, setApplyPromptMonthName] = useState('');
+
+  const handleCloseSnackbar = () => {
+    setSnackbar(prev => ({ ...prev, open: false }));
+  };
+
+  const handleOpenSnackbar = useCallback((message: string, severity: 'success' | 'error' | 'warning' | 'info') => {
+    setSnackbar({ open: true, message, severity });
+  }, []);
 
   const fetchTransactions = useCallback(async () => {
     if (!selectedAccount) {
@@ -63,6 +72,13 @@ const TransactionEditionArea: React.FC = () => {
     setDatabaseTransactions(transactions);
   }, [fetchTransactions]);
 
+  const fetchRecurrings = useCallback(async () => {
+    if (!selectedAccount) {
+      return [];
+    }
+    return await dbService.getRecurringsByAccountId(selectedAccount.id);
+  }, [selectedAccount]);
+
   useEffect(() => {
     let isMounted = true;
     fetchTransactions().then((transactions) => {
@@ -75,134 +91,111 @@ const TransactionEditionArea: React.FC = () => {
     };
   }, [fetchTransactions, transactionsVersion]);
 
-  const viewableTransactions = useMemo(() => {
-    if (databaseTransactions.length === 0) {
-      return [];
-    }
-    filters.forEach(f => f.setup());
-    let filtered = [...databaseTransactions];
-    filters.forEach(f => {
-      if (f.active) {
-        filtered = f.apply(filtered);
+  useEffect(() => {
+    let isMounted = true;
+    fetchRecurrings().then((data) => {
+      if (isMounted) {
+        setRecurrings(data);
       }
     });
-    if (searchLabel) {
-      filtered = filtered.filter(t => t.label.toLowerCase().includes(searchLabel.toLowerCase()));
-    }
-    return filtered.sort((a, b) => dayjs(a.dueDate).diff(dayjs(b.dueDate)));
-  }, [databaseTransactions, filters, searchLabel]);
+    return () => {
+      isMounted = false;
+    };
+  }, [fetchRecurrings, recurringsVersion]);
 
-  const handleFilterChange = (filter: Filterable) => {
-    setFilters(prevFilters => {
-      const index = prevFilters.findIndex(f => f === filter);
-      if (index !== -1) {
-        const newFilters = [...prevFilters];
-        newFilters[index] = filter;
-        return newFilters;
-      }
-      return prevFilters;
-    });
-  };
-
-  const handleOpenFilterDialog = () => {
-    setIsFilterDialogOpen(true);
-  };
-
-  const handleAddTransaction = () => {
+  const applyRecurringsForMonth = useCallback(async (monthStr: string) => {
     if (!selectedAccount) return;
-    setEditorMode('create');
-    setTransactionToEdit(undefined);
-    setIsEditorOpen(true);
-  };
+    const accountRecurrings = await dbService.getRecurringsByAccountId(selectedAccount.id);
+    if (accountRecurrings.length === 0) return;
 
-  const handleEditTransaction = (transaction: Transaction) => {
-    setEditorMode('edit');
-    setTransactionToEdit(transaction);
-    setIsEditorOpen(true);
-  };
+    const generatedTxs = RecurringUtils.generateTransactionsForMonth(accountRecurrings, monthStr);
+    
+    // Fetch all existing transactions for this account and filter for the target month
+    const allTxs = await dbService.getTransactionsByAccountId(selectedAccount.id);
+    const existingMonthRecurringTxs = allTxs.filter(tx => 
+      tx.dueDate.startsWith(monthStr) && tx.recurringId !== undefined
+    );
 
-  const handleCloneTransaction = (transaction: Transaction) => {
-    setEditorMode('clone');
-    setTransactionToEdit(transaction);
-    setIsEditorOpen(true);
-  };
+    const generatedRecurringIds = new Set(generatedTxs.map(tx => tx.recurringId));
 
-  const handleSaveTransaction = async (newTransaction: Transaction) => {
-    if (editorMode === 'create' || editorMode === 'clone') {
-      await dbService.addTransaction(newTransaction);
-    } else {
-      await dbService.updateTransaction(newTransaction);
+    // 1. Delete transactions that are no longer in the generated recurrings list
+    const txsToDelete = existingMonthRecurringTxs.filter(tx => !generatedRecurringIds.has(tx.recurringId));
+    for (const tx of txsToDelete) {
+      await dbService.deleteTransaction(tx.id);
     }
+
+    // 2. Add or update transactions
+    for (const genTx of generatedTxs) {
+      const existingTx = existingMonthRecurringTxs.find(tx => tx.recurringId === genTx.recurringId);
+      if (existingTx) {
+        // If modified, update
+        if (
+          existingTx.label !== genTx.label ||
+          existingTx.description !== genTx.description ||
+          existingTx.amount !== genTx.amount ||
+          existingTx.dueDate !== genTx.dueDate
+        ) {
+          const updatedTx = {
+            ...existingTx,
+            label: genTx.label,
+            description: genTx.description,
+            amount: genTx.amount,
+            dueDate: genTx.dueDate,
+          };
+          await dbService.updateTransaction(updatedTx);
+        }
+      } else {
+        // Add new
+        await dbService.addTransaction(genTx);
+      }
+    }
+
+    const appliedKey = `applied_recurrings_${selectedAccount.id}_${monthStr}`;
+    await dbService.setSetting(appliedKey, 'true');
+
     setTransactionsVersion(v => v + 1);
     await refreshTransactions();
-  };
 
-  const handleDeleteTransaction = (transaction: Transaction) => {
-    setTransactionToDelete(transaction);
-    setConfirmMessage(t('transaction.delete_confirmation'));
-    setIsConfirmDialogOpen(true);
-  };
+    handleOpenSnackbar(t('recurring.apply_success', { date: monthStr }), 'success');
+  }, [selectedAccount, t, setTransactionsVersion, refreshTransactions, handleOpenSnackbar]);
 
-  const handleConfirmDelete = async () => {
-    if (transactionToDelete) {
-      await dbService.deleteTransaction(transactionToDelete.id);
-      setTransactionsVersion(v => v + 1);
-      await refreshTransactions();
-    }
-    setTransactionToDelete(undefined);
-    setIsConfirmDialogOpen(false);
-  };
+  const checkAutoApplyRecurrings = useCallback(async () => {
+    if (!selectedAccount) return;
 
-  const handleRemoveSelected = () => {
-    setConfirmMessage(t('transaction.remove_selected_confirmation'));
-    setIsRemoveSelectedDialogOpen(true);
-  };
+    const accountRecurrings = await dbService.getRecurringsByAccountId(selectedAccount.id);
+    if (accountRecurrings.length === 0) return;
 
-  const handleCloneSelected = (transaction: Transaction) => {
-    if (selectedTransactions.length === 1) {
-      setTransactionToClone(transaction);
-      setIsCloningDialogOpen(true);
-    }
-  };
+    const today = dayjs();
+    const currentMonthStr = today.format('YYYY-MM');
+    const currentMonthKey = `applied_recurrings_${selectedAccount.id}_${currentMonthStr}`;
 
-  const handleConfirmCloning = async (targetDate: dayjs.Dayjs) => {
-    if (!selectedAccount || selectedTransactions.length !== 1) return;
-
-    const source = selectedTransactions[0];
-    const sourceDate = dayjs(source.dueDate);
-    const target = dayjs(targetDate);
-
-    // Calculate the number of months between source and target
-    const monthsDiff = target.year() * 12 + target.month() - (sourceDate.year() * 12 + sourceDate.month());
-
-    const newTransactions: Transaction[] = [];
-    for (let i = 1; i <= monthsDiff; i++) {
-      const clonedDate = sourceDate.add(i, 'month');
-      newTransactions.push({
-        id: UuidUtils.generate(),
-        accountId: selectedAccount.id,
-        label: source.label,
-        description: source.description,
-        amount: source.amount,
-        dueDate: clonedDate.format('YYYY-MM-DD'),
-      });
+    const currentMonthSetting = await dbService.getSettingByKey(currentMonthKey);
+    if (!currentMonthSetting || currentMonthSetting.value !== 'true') {
+      setApplyPromptMonth(currentMonthStr);
+      setApplyPromptMonthName(today.locale(i18n.language).format('MMMM YYYY'));
+      setIsApplyPromptOpen(true);
+      return;
     }
 
-    await Promise.all(newTransactions.map(tx => dbService.addTransaction(tx)));
-    setSelectedTransactions([]);
-    setTransactionsVersion(v => v + 1);
-    await refreshTransactions();
-    handleOpenSnackbar(t('transaction.clone_success', { count: newTransactions.length }), 'success');
-  };
+    const daysInMonth = today.daysInMonth();
+    const isLast5Days = today.date() > (daysInMonth - 5);
+    if (isLast5Days) {
+      const nextMonth = today.add(1, 'month');
+      const nextMonthStr = nextMonth.format('YYYY-MM');
+      const nextMonthKey = `applied_recurrings_${selectedAccount.id}_${nextMonthStr}`;
+      const nextMonthSetting = await dbService.getSettingByKey(nextMonthKey);
+      if (!nextMonthSetting || nextMonthSetting.value !== 'true') {
+        setApplyPromptMonth(nextMonthStr);
+        setApplyPromptMonthName(nextMonth.locale(i18n.language).format('MMMM YYYY'));
+        setIsApplyPromptOpen(true);
+      }
+    }
+  }, [selectedAccount, i18n.language]);
 
-  const handleConfirmRemoveSelected = async () => {
-    const selectedIds = selectedTransactions.map(t => t.id);
-    await Promise.all(selectedIds.map(id => dbService.deleteTransaction(id)));
-    setSelectedTransactions([]);
-    setTransactionsVersion(v => v + 1);
-    await refreshTransactions();
-    setIsRemoveSelectedDialogOpen(false);
-  };
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    checkAutoApplyRecurrings();
+  }, [selectedAccount, checkAutoApplyRecurrings]);
 
   const handleExport = (data: string, filename: string, type: 'json' | 'csv') => {
     const blob = new Blob([data], { type: type === 'json' ? 'application/json' : 'text/csv' });
@@ -229,45 +222,45 @@ const TransactionEditionArea: React.FC = () => {
     handleOpenSnackbar(message, 'error');
   };
 
-  const handleCloseSnackbar = () => {
-    setSnackbar(prev => ({ ...prev, open: false }));
+  const handleRecurringExport = (data: string, filename: string, type: 'json' | 'csv') => {
+    const blob = new Blob([data], { type: type === 'json' ? 'application/json' : 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    handleOpenSnackbar(t('recurring.export_success', { count: recurrings.length, filename }), 'success');
+    setIsExportDialogOpen(false);
   };
 
-  const handleOpenSnackbar = (message: string, severity: 'success' | 'error' | 'warning' | 'info') => {
-    setSnackbar({ open: true, message, severity });
+  const handleRecurringImportSuccess = (count: number, accountLabel: string) => {
+    handleOpenSnackbar(t('recurring.import_success', { count, accountLabel }), 'success');
+    setRecurringsVersion(v => v + 1);
   };
 
-  const handleToggleTransaction = (transaction: Transaction, event: React.ChangeEvent<HTMLInputElement>) => {
-    const clickedIndex = viewableTransactions.findIndex(t => t.id === transaction.id);
-
-    if ((event.nativeEvent as unknown as MouseEvent).shiftKey) {
-      const newSelection = handleRangeSelection(viewableTransactions, selectedTransactions, clickedIndex);
-      setSelectedTransactions(newSelection);
-    } else {
-      // Normal toggle
-      setSelectedTransactions(prev => {
-        const isSelected = prev.some(t => t.id === transaction.id);
-        if (isSelected) {
-          return prev.filter(t => t.id !== transaction.id);
-        }
-        return [...prev, transaction];
-      });
-    }
+  const handleRecurringImportError = (message: string) => {
+    handleOpenSnackbar(message, 'error');
   };
 
-  const handleToggleSelectAll = () => {
-    const newSelectAll = !selectAll;
-    setSelectAll(newSelectAll);
-    if (newSelectAll) {
-      setSelectedTransactions([...viewableTransactions]);
-    } else {
-      setSelectedTransactions([]);
-    }
-  };
+  const handleTransactionsChanged = useCallback(() => {
+    setTransactionsVersion(v => v + 1);
+    refreshTransactions();
+  }, [setTransactionsVersion, refreshTransactions]);
+
+  const handleRecurringsChanged = useCallback(() => {
+    setRecurringsVersion(v => v + 1);
+  }, []);
 
   return (
     <Box className="transaction-edition-area">
       <Paper className="left-container" elevation={0} variant="outlined" >
+        <Box sx={{ p: 1, display: 'flex', justifyContent: 'center', width: '100%', borderBottom: '1px solid', borderColor: 'divider', mb: 1 }}>
+          <AccountList />
+        </Box>
         <Box className="calendar-container">
           <DateCalendar
             value={selectedDate}
@@ -281,14 +274,28 @@ const TransactionEditionArea: React.FC = () => {
         <Box className="logo-container">
            <Logo color={primaryColor} size={150} />
         </Box>
-        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-          <Tooltip title={t('export.title')}>
-            <IconButton onClick={() => setIsExportDialogOpen(true)} disabled={!selectedAccount}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, pb: 1 }}>
+          <Select
+            value={i18n.language}
+            onChange={handleLanguageChange}
+            size="small"
+            sx={{ minWidth: 90, height: 32, fontSize: '0.85rem' }}
+          >
+            <MenuItem value="fr" sx={{ fontSize: '0.85rem' }}>{t('header.languages.fr')}</MenuItem>
+            <MenuItem value="en" sx={{ fontSize: '0.85rem' }}>{t('header.languages.en')}</MenuItem>
+          </Select>
+
+          <IconButton onClick={toggleTheme} size="small" color="inherit">
+            {mode === 'dark' ? <Brightness7 fontSize="small" /> : <Brightness4 fontSize="small" />}
+          </IconButton>
+
+          <Tooltip title={activeTab === 1 ? t('recurring.export_title') : t('export.title')}>
+            <IconButton onClick={() => setIsExportDialogOpen(true)} disabled={!selectedAccount} size="small">
               <Download fontSize="small" />
             </IconButton>
           </Tooltip>
-          <Tooltip title={t('import.title')}>
-            <IconButton onClick={() => setIsImportDialogOpen(true)} disabled={!selectedAccount}>
+          <Tooltip title={activeTab === 1 ? t('recurring.import_title') : t('import.title')}>
+            <IconButton onClick={() => setIsImportDialogOpen(true)} disabled={!selectedAccount} size="small">
               <Upload fontSize="small" />
             </IconButton>
           </Tooltip>
@@ -296,128 +303,67 @@ const TransactionEditionArea: React.FC = () => {
       </Paper>
 
       <Paper className="right-container" elevation={0} variant="outlined">
-        <TransactionToolbar 
-          onAddTransaction={handleAddTransaction} 
-          onFilterClick={handleOpenFilterDialog} 
-          onRemoveSelected={handleRemoveSelected}
-          onCloneSelected={handleCloneSelected}
-          disabled={!selectedAccount} 
-          hasSelectedTransactions={selectedTransactions.length > 0}
-          selectedTransactionsCount={selectedTransactions.length}
-          searchLabel={searchLabel} 
-          onSearchLabelChange={setSearchLabel} 
-        />
-        <Box className="table-container">
-          <Table size="small" sx={{ fontSize: '0.875rem' }} stickyHeader>
-              <TableHead>
-                <TableRow>
-                  <TableCell className="indicator-cell-header" />
-                  <TableCell className="checkbox-cell-header">
-                    <Checkbox
-                      indeterminate={selectedTransactions.length > 0 && selectedTransactions.length < viewableTransactions.length && viewableTransactions.length > 0}
-                      checked={selectAll}
-                      onChange={handleToggleSelectAll}
-                      size="small"
-                      aria-label={t('transaction.select_all')}
-                      data-testid="select-all-checkbox"
-                    />
-                  </TableCell>
-                  <TableCell>{t('transaction.dueDate')}</TableCell>
-                  <TableCell>{t('transaction.label')}</TableCell>
-                  <TableCell>{t('transaction.description')}</TableCell>
-                  <TableCell align="right">{t('transaction.amount')}</TableCell>
-                  <TableCell align="right" className="actions-cell">{t('transaction.actions')}</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {viewableTransactions.map((transaction) => {
-                  const isToday = dayjs(transaction.dueDate).isSame(dayjs(), 'day');
-                  const isSelected = selectedTransactions.some(t => t.id === transaction.id);
-                  return (
-                    <TableRow key={transaction.id} className={transaction.amount > 0 ? 'row-positive' : 'row-default'}>
-                      <TableCell className={`indicator-cell ${isToday ? 'indicator-cell-today' : ''}`} />
-                      <TableCell className="checkbox-cell">
-                        <Checkbox
-                          checked={isSelected}
-                          onChange={(e) => handleToggleTransaction(transaction, e)}
-                          size="small"
-                          aria-label={t('transaction.select')}
-                          data-testid={`checkbox-${transaction.id}`}
-                        />
-                      </TableCell>
-                      <TableCell>{FormatUtils.date(transaction.dueDate)}</TableCell>
-                      <TableCell>{transaction.label}</TableCell>
-                      <TableCell>{transaction.description}</TableCell>
-                      <TableCell align="right">{FormatUtils.currency(transaction.amount)}</TableCell>
-                      <TableCell className="actions-cell" align="right">
-                        <IconButton size="small" onClick={() => handleCloneTransaction(transaction)} aria-label="clone transaction"><ContentCopy fontSize="small" /></IconButton>
-                        <IconButton size="small" onClick={() => handleEditTransaction(transaction)} aria-label="edit transaction"><Edit fontSize="small" /></IconButton>
-                        <IconButton size="small" onClick={() => handleDeleteTransaction(transaction)} aria-label="delete transaction"><Delete fontSize="small" /></IconButton>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-                {viewableTransactions.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={7} align="center">
-                      {selectedAccount ? t('transaction.no_transactions') : t('account.select')}
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+        <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
+          <Tabs value={activeTab} onChange={(_e, newValue) => setActiveTab(newValue)} aria-label="tabs">
+            <Tab label={t('tabs.transactions')} />
+            <Tab label={t('tabs.recurrings')} />
+          </Tabs>
         </Box>
+
+        {activeTab === 0 && (
+          <TransactionsTab
+            databaseTransactions={databaseTransactions}
+            onTransactionsChanged={handleTransactionsChanged}
+            onOpenSnackbar={handleOpenSnackbar}
+          />
+        )}
+
+        {activeTab === 1 && (
+          <RecurringsTab
+            recurrings={recurrings}
+            onRecurringsChanged={handleRecurringsChanged}
+            onTransactionsChanged={handleTransactionsChanged}
+            applyRecurringsForMonth={applyRecurringsForMonth}
+          />
+        )}
       </Paper>
 
-      <TransactionEditor
-        open={isEditorOpen}
-        onClose={() => setIsEditorOpen(false)}
-        onSave={handleSaveTransaction}
-        mode={editorMode}
-        transaction={transactionToEdit}
-        accountId={selectedAccount?.id || ''}
-      />
-
-      <ConfirmDialog
-        open={isConfirmDialogOpen}
-        onClose={() => setIsConfirmDialogOpen(false)}
-        onConfirm={handleConfirmDelete}
-        message={confirmMessage}
-      />
-
-      <ConfirmDialog
-        open={isRemoveSelectedDialogOpen}
-        onClose={() => setIsRemoveSelectedDialogOpen(false)}
-        onConfirm={handleConfirmRemoveSelected}
-        message={confirmMessage}
+      <RecurringApplyPromptDialog
+        open={isApplyPromptOpen}
+        onClose={() => setIsApplyPromptOpen(false)}
+        onConfirm={() => {
+          applyRecurringsForMonth(applyPromptMonth);
+          setIsApplyPromptOpen(false);
+        }}
+        monthName={applyPromptMonthName}
       />
 
       <ExportTransactionDialog
-        open={isExportDialogOpen}
+        open={isExportDialogOpen && activeTab === 0}
         onClose={() => setIsExportDialogOpen(false)}
         transactions={databaseTransactions}
         onExport={handleExport}
       />
 
       <ImportTransactionDialog
-        open={isImportDialogOpen}
+        open={isImportDialogOpen && activeTab === 0}
         onClose={() => setIsImportDialogOpen(false)}
         onImportSuccess={handleImportSuccess}
         onError={handleImportError}
       />
 
-      <TransactionFilterDialog
-        open={isFilterDialogOpen}
-        onClose={() => setIsFilterDialogOpen(false)}
-        filters={filters}
-        onFilterChange={handleFilterChange}
+      <ExportRecurringDialog
+        open={isExportDialogOpen && activeTab === 1}
+        onClose={() => setIsExportDialogOpen(false)}
+        recurrings={recurrings}
+        onExport={handleRecurringExport}
       />
 
-      <TransactionCloningDialog
-        open={isCloningDialogOpen}
-        onClose={() => setIsCloningDialogOpen(false)}
-        onConfirm={handleConfirmCloning}
-        sourceTransaction={transactionToClone || selectedTransactions[0]}
+      <ImportRecurringDialog
+        open={isImportDialogOpen && activeTab === 1}
+        onClose={() => setIsImportDialogOpen(false)}
+        onImportSuccess={handleRecurringImportSuccess}
+        onError={handleRecurringImportError}
       />
 
       <Snackbar

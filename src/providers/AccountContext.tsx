@@ -25,13 +25,21 @@ export const AccountProvider: React.FC<{ children: ReactNode }> = ({ children })
   useEffect(() => {
     const initAccount = async () => {
       try {
+        const accounts = await dbService.getAllAccounts();
         const setting = await dbService.getSettingByKey('selected_account');
+        let initialized = false;
+
         if (setting && setting.value) {
-          const accounts = await dbService.getAllAccounts();
           const account = accounts.find(a => a.label === setting.value);
           if (account) {
             setSelectedAccountState(account);
+            initialized = true;
           }
+        }
+
+        if (!initialized && accounts.length > 0) {
+          setSelectedAccountState(accounts[0]);
+          await dbService.setSetting('selected_account', accounts[0].label);
         }
       } catch (error) {
         console.error('Error initializing account from settings:', error);

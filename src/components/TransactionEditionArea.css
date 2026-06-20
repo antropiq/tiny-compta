@@ -8,7 +8,7 @@
 }
 
 .left-container {
-  flex: 0 0 300px;
+  flex: 0 0 330px;
   display: flex;
   flex-direction: column;
   border-radius: 16px;

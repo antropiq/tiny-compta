@@ -2,6 +2,7 @@ import { openDB } from 'idb';
 import type { DBSchema, IDBPDatabase } from 'idb';
 import type { Account } from '../types/account';
 import type { Transaction } from '../types/transaction';
+import type { Recurring } from '../types/recurring';
 import type { Setting } from '../types/settings';
 import { UuidUtils } from '../utils/uuidUtils';
 
@@ -15,6 +16,11 @@ interface MyDB extends DBSchema {
     value: Transaction;
     indexes: { 'by-account': string };
   };
+  recurrings: {
+    key: string;
+    value: Recurring;
+    indexes: { 'by-account': string };
+  };
   settings: {
     key: string;
     value: Setting;
@@ -23,28 +29,38 @@ interface MyDB extends DBSchema {
 }
 
 const DB_NAME = 'TinyComptaDB';
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 
 export const initDB = async () => {
   return openDB<MyDB>(DB_NAME, DB_VERSION, {
-    upgrade(db) {
-      if (!db.objectStoreNames.contains('accounts')) {
-        db.createObjectStore('accounts', { keyPath: 'id' });
+    upgrade(db, oldVersion) {
+      if (oldVersion < 1) {
+        if (!db.objectStoreNames.contains('accounts')) {
+          db.createObjectStore('accounts', { keyPath: 'id' });
+        }
+        if (!db.objectStoreNames.contains('transactions')) {
+          const transactionStore = db.createObjectStore('transactions', { keyPath: 'id' });
+          transactionStore.createIndex('by-account', 'accountId');
+        }
       }
-      if (!db.objectStoreNames.contains('transactions')) {
-        const transactionStore = db.createObjectStore('transactions', { keyPath: 'id' });
-        transactionStore.createIndex('by-account', 'accountId');
-      }
-      if (!db.objectStoreNames.contains('settings')) {
-        const settingsStore = db.createObjectStore('settings', { keyPath: 'id' });
-        settingsStore.createIndex('by-key', 'key');
+      if (oldVersion < 2) {
+        if (!db.objectStoreNames.contains('settings')) {
+          const settingsStore = db.createObjectStore('settings', { keyPath: 'id' });
+          settingsStore.createIndex('by-key', 'key');
 
-        const defaultSettings: Setting[] = [
-          { id: UuidUtils.generate(), key: 'selected_account', value: '' },
-          { id: UuidUtils.generate(), key: 'selected_language', value: 'fr' },
-        ];
-        for (const setting of defaultSettings) {
-          settingsStore.put(setting);
+          const defaultSettings: Setting[] = [
+            { id: UuidUtils.generate(), key: 'selected_account', value: '' },
+            { id: UuidUtils.generate(), key: 'selected_language', value: 'fr' },
+          ];
+          for (const setting of defaultSettings) {
+            settingsStore.put(setting);
+          }
+        }
+      }
+      if (oldVersion < 3) {
+        if (!db.objectStoreNames.contains('recurrings')) {
+          const recurringStore = db.createObjectStore('recurrings', { keyPath: 'id' });
+          recurringStore.createIndex('by-account', 'accountId');
         }
       }
     },
@@ -96,6 +112,12 @@ export class DatabaseService {
     for (const tx of txs) {
       await this.db.delete('transactions', tx.id);
     }
+
+    // Cascading delete: find all recurrings for this account and delete them
+    const recurrings = await this.getRecurringsByAccountId(id);
+    for (const rec of recurrings) {
+      await this.db.delete('recurrings', rec.id);
+    }
     
     await this.db.delete('accounts', id);
   }
@@ -129,6 +151,37 @@ export class DatabaseService {
   async deleteTransaction(id: string): Promise<void> {
     await this.ensureConnected();
     await this.db.delete('transactions', id);
+  }
+
+  // Recurring CRUD
+  async getRecurring(id: string): Promise<Recurring | undefined> {
+    await this.ensureConnected();
+    return this.db.get('recurrings', id);
+  }
+
+  async getAllRecurrings(): Promise<Recurring[]> {
+    await this.ensureConnected();
+    return this.db.getAll('recurrings');
+  }
+
+  async getRecurringsByAccountId(accountId: string): Promise<Recurring[]> {
+    await this.ensureConnected();
+    return this.db.getAllFromIndex('recurrings', 'by-account', accountId);
+  }
+
+  async addRecurring(recurring: Recurring): Promise<void> {
+    await this.ensureConnected();
+    await this.db.put('recurrings', recurring);
+  }
+
+  async updateRecurring(recurring: Recurring): Promise<void> {
+    await this.ensureConnected();
+    await this.db.put('recurrings', recurring);
+  }
+
+  async deleteRecurring(id: string): Promise<void> {
+    await this.ensureConnected();
+    await this.db.delete('recurrings', id);
   }
 
   // Settings CRUD

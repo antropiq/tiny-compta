@@ -47,7 +47,7 @@ describe('AccountProvider', () => {
     expect(result.current!.isInitializing).toBe(false);
   });
 
-  it('does not select account when setting value does not match any account', async () => {
+  it('selects the first account when setting value does not match any account', async () => {
     vi.mocked(dbService.getSettingByKey).mockResolvedValue({ id: 's1', key: 'selected_account', value: 'Nonexistent' });
     vi.mocked(dbService.getAllAccounts).mockResolvedValue([{ id: 'acc-1', label: 'Other Account' }]);
 
@@ -59,7 +59,25 @@ describe('AccountProvider', () => {
       await new Promise(resolve => setTimeout(resolve, 0));
     });
 
-    expect(result.current!.selectedAccount).toBeNull();
+    expect(result.current!.selectedAccount).toEqual({ id: 'acc-1', label: 'Other Account' });
+    expect(result.current!.isInitializing).toBe(false);
+  });
+
+  it('selects the first account on load when no selected account setting is set', async () => {
+    const mockAccount = { id: 'acc-1', label: 'First Account' };
+    vi.mocked(dbService.getSettingByKey).mockResolvedValue(undefined);
+    vi.mocked(dbService.getAllAccounts).mockResolvedValue([mockAccount]);
+
+    const { result } = renderHook(() => useContext(AccountContext), {
+      wrapper: ({ children }) => <AccountProvider>{children}</AccountProvider>,
+    });
+
+    await act(async () => {
+      await new Promise(resolve => setTimeout(resolve, 0));
+    });
+
+    expect(result.current!.selectedAccount).toEqual(mockAccount);
+    expect(dbService.setSetting).toHaveBeenCalledWith('selected_account', 'First Account');
     expect(result.current!.isInitializing).toBe(false);
   });
 
