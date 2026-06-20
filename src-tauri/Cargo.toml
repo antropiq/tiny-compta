@@ -1,6 +1,6 @@
 [package]
 name = "tiny-compta"
-version = "0.1.1"
+version = "0.1.2"
 description = "Small bank account manager"
 authors = ["vgar44@laposte.net"]
 edition = "2021"
