@@ -109,6 +109,7 @@
     "export_success": "{{count}} recurring payments have been successfully exported to file {{filename}}",
     "import_success": "{{count}} recurring payments have been imported into account {{accountLabel}}",
     "import_error_invalid_format": "Json content does not follow the good structure for recurring payments",
-    "import_error_invalid_data": "Invalid data in one or more recurring payments. Import aborted."
+    "import_error_invalid_data": "Invalid data in one or more recurring payments. Import aborted.",
+    "sum": "Sum of recurrings: {{sum}}"
   }
 }

@@ -22,7 +22,19 @@ import './TransactionEditionArea.css';
 import Logo from './logo';
 import { RecurringUtils } from '../utils/recurringUtils';
 
-const TransactionEditionArea: React.FC = () => {
+interface TransactionEditionAreaProps {
+  activeTab: number;
+  onActiveTabChange: (tab: number) => void;
+  recurrings: Recurring[];
+  onRecurringsChange: (recurrings: Recurring[]) => void;
+}
+
+const TransactionEditionArea: React.FC<TransactionEditionAreaProps> = ({
+  activeTab,
+  onActiveTabChange,
+  recurrings: parentRecurrings,
+  onRecurringsChange,
+}) => {
   const { t, i18n } = useTranslation();
   const { selectedAccount, selectedDate, setSelectedDate, setTransactionsVersion, transactionsVersion } = useAccount();
   const theme = useTheme();
@@ -36,8 +48,6 @@ const TransactionEditionArea: React.FC = () => {
   };
 
   const [databaseTransactions, setDatabaseTransactions] = useState<Transaction[]>([]);
-  const [activeTab, setActiveTab] = useState(0);
-  const [recurrings, setRecurrings] = useState<Recurring[]>([]);
   const [recurringsVersion, setRecurringsVersion] = useState(0);
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
@@ -95,13 +105,13 @@ const TransactionEditionArea: React.FC = () => {
     let isMounted = true;
     fetchRecurrings().then((data) => {
       if (isMounted) {
-        setRecurrings(data);
+        onRecurringsChange(data);
       }
     });
     return () => {
       isMounted = false;
     };
-  }, [fetchRecurrings, recurringsVersion]);
+  }, [fetchRecurrings, recurringsVersion, onRecurringsChange]);
 
   const applyRecurringsForMonth = useCallback(async (monthStr: string) => {
     if (!selectedAccount) return;
@@ -233,7 +243,7 @@ const TransactionEditionArea: React.FC = () => {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
 
-    handleOpenSnackbar(t('recurring.export_success', { count: recurrings.length, filename }), 'success');
+    handleOpenSnackbar(t('recurring.export_success', { count: parentRecurrings.length, filename }), 'success');
     setIsExportDialogOpen(false);
   };
 
@@ -304,7 +314,7 @@ const TransactionEditionArea: React.FC = () => {
 
       <Paper className="right-container" elevation={0} variant="outlined">
         <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
-          <Tabs value={activeTab} onChange={(_e, newValue) => setActiveTab(newValue)} aria-label="tabs">
+          <Tabs value={activeTab} onChange={(_e, newValue) => onActiveTabChange(newValue)} aria-label="tabs">
             <Tab label={t('tabs.transactions')} />
             <Tab label={t('tabs.recurrings')} />
           </Tabs>
@@ -320,7 +330,7 @@ const TransactionEditionArea: React.FC = () => {
 
         {activeTab === 1 && (
           <RecurringsTab
-            recurrings={recurrings}
+            recurrings={parentRecurrings}
             onRecurringsChanged={handleRecurringsChanged}
             onTransactionsChanged={handleTransactionsChanged}
             applyRecurringsForMonth={applyRecurringsForMonth}
@@ -355,7 +365,7 @@ const TransactionEditionArea: React.FC = () => {
       <ExportRecurringDialog
         open={isExportDialogOpen && activeTab === 1}
         onClose={() => setIsExportDialogOpen(false)}
-        recurrings={recurrings}
+        recurrings={parentRecurrings}
         onExport={handleRecurringExport}
       />
 

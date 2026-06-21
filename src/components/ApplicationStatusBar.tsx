@@ -6,9 +6,15 @@ import dayjs from 'dayjs';
 import { useBalance } from '../hooks/useBalance';
 import { useAccount } from '../hooks/useAccount';
 import { FormatUtils } from '../utils/formatUtils';
+import type { Recurring } from '../types/recurring';
 import './ApplicationStatusBar.css';
 
-const ApplicationStatusBar: React.FC = () => {
+interface ApplicationStatusBarProps {
+  activeTab: number;
+  recurrings: Recurring[];
+}
+
+const ApplicationStatusBar: React.FC<ApplicationStatusBarProps> = ({ activeTab, recurrings }) => {
   const { t } = useTranslation();
   const { selectedAccount, selectedDate, selectedTransactions } = useAccount();
   const { balance, hasTransactions } = useBalance();
@@ -17,6 +23,10 @@ const ApplicationStatusBar: React.FC = () => {
   const formattedBalance = FormatUtils.currency(balance);
   const selectedSum = selectedTransactions.reduce((sum, tx) => sum + tx.amount, 0);
   const formattedSelectedSum = FormatUtils.currency(selectedSum);
+  const today = dayjs().format('YYYY-MM-DD');
+  const activeRecurrings = recurrings.filter(r => !r.endDate || r.endDate >= today);
+  const recurringSum = activeRecurrings.reduce((sum, r) => sum + r.amount, 0);
+  const formattedRecurringSum = FormatUtils.currency(recurringSum);
 
   return (
     <Paper component="div" className="status-bar" elevation={1}>
@@ -29,6 +39,11 @@ const ApplicationStatusBar: React.FC = () => {
         )}
       </div>
       <div className="status-center">
+        {activeTab === 1 && recurrings.length > 0 && (
+          t('recurring.sum', {
+            sum: formattedRecurringSum
+          })
+        )}
         {selectedTransactions.length > 0 && (
           t('transaction.selected_sum', {
             sum: formattedSelectedSum

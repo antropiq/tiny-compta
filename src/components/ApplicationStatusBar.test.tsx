@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { useAccount } from '../hooks/useAccount';
 import dayjs from 'dayjs';
 import type { AccountContextType } from '../contexts/AccountContext';
+import type { Recurring } from '../types/recurring';
 
 vi.mock('../hooks/useBalance', () => ({
   useBalance: vi.fn(),
@@ -50,7 +51,7 @@ describe('ApplicationStatusBar', () => {
       i18n: { language: 'fr' },
     } as unknown as ReturnType<typeof useTranslation>);
 
-    render(<ApplicationStatusBar />);
+    render(<ApplicationStatusBar activeTab={0} recurrings={[]} />);
     expect(screen.getByText(`Tiny compta version @${packageJson.version}`)).toBeInTheDocument();
   });
 
@@ -73,7 +74,7 @@ describe('ApplicationStatusBar', () => {
       i18n: { language: 'fr' },
     } as unknown as ReturnType<typeof useTranslation>);
 
-    render(<ApplicationStatusBar />);
+    render(<ApplicationStatusBar activeTab={0} recurrings={[]} />);
     expect(screen.getByText('Solde du compte au 15/05/2024: $123.45')).toBeInTheDocument();
   });
 
@@ -95,7 +96,7 @@ describe('ApplicationStatusBar', () => {
       i18n: { language: 'fr' },
     } as unknown as ReturnType<typeof useTranslation>);
 
-    render(<ApplicationStatusBar />);
+    render(<ApplicationStatusBar activeTab={0} recurrings={[]} />);
     expect(screen.queryByText(/Solde du compte/)).not.toBeInTheDocument();
   });
 
@@ -117,7 +118,7 @@ describe('ApplicationStatusBar', () => {
       i18n: { language: 'fr' },
     } as unknown as ReturnType<typeof useTranslation>);
 
-    render(<ApplicationStatusBar />);
+    render(<ApplicationStatusBar activeTab={0} recurrings={[]} />);
     expect(screen.queryByText(/Solde du compte/)).not.toBeInTheDocument();
   });
 
@@ -139,7 +140,7 @@ describe('ApplicationStatusBar', () => {
       i18n: { language: 'fr' },
     } as unknown as ReturnType<typeof useTranslation>);
 
-    render(<ApplicationStatusBar />);
+    render(<ApplicationStatusBar activeTab={0} recurrings={[]} />);
     expect(screen.queryByText(/Sélectionné/)).not.toBeInTheDocument();
   });
 
@@ -170,7 +171,113 @@ describe('ApplicationStatusBar', () => {
       i18n: { language: 'fr' },
     } as unknown as ReturnType<typeof useTranslation>);
 
-    render(<ApplicationStatusBar />);
+    render(<ApplicationStatusBar activeTab={0} recurrings={[]} />);
     expect(screen.getByText('Sélectionné : $30.00')).toBeInTheDocument();
+  });
+
+  it('does not render recurring sum when not on recurrings tab', () => {
+    vi.mocked(useBalance).mockReturnValue({ balance: 0, loading: false, hasTransactions: false });
+    vi.mocked(useAccount).mockReturnValue({ 
+      selectedAccount: null, 
+      selectedDate: dayjs(),
+      setSelectedAccount: vi.fn(),
+      setSelectedDate: vi.fn(),
+      transactionsVersion: 0,
+      setTransactionsVersion: vi.fn(),
+      isInitializing: false,
+      selectedTransactions: [],
+      setSelectedTransactions: vi.fn()
+    } as AccountContextType);
+    vi.mocked(useTranslation).mockReturnValue({
+      t: mockT,
+      i18n: { language: 'fr' },
+    } as unknown as ReturnType<typeof useTranslation>);
+
+    render(<ApplicationStatusBar activeTab={0} recurrings={[{ id: 'r1', accountId: '1', label: 'Rent', amount: 500, dayOfMonth: 1, startDate: '2024-01-01' } as Recurring]} />);
+    expect(screen.queryByText(/Somme des paiements récurrents/)).not.toBeInTheDocument();
+  });
+
+  it('renders recurring sum when on recurrings tab with recurrings', () => {
+    const mockRecurrings: Recurring[] = [
+      { id: 'r1', accountId: '1', label: 'Rent', amount: 500, dayOfMonth: 1, startDate: '2024-01-01' },
+      { id: 'r2', accountId: '1', label: 'Internet', amount: 30, dayOfMonth: 15, startDate: '2024-01-01' },
+    ];
+    vi.mocked(useBalance).mockReturnValue({ balance: 0, loading: false, hasTransactions: false });
+    vi.mocked(useAccount).mockReturnValue({ 
+      selectedAccount: null, 
+      selectedDate: dayjs(),
+      setSelectedAccount: vi.fn(),
+      setSelectedDate: vi.fn(),
+      transactionsVersion: 0,
+      setTransactionsVersion: vi.fn(),
+      isInitializing: false,
+      selectedTransactions: [],
+      setSelectedTransactions: vi.fn()
+    } as AccountContextType);
+    vi.mocked(useTranslation).mockReturnValue({
+      t: (key: string, options?: { sum: string }) => {
+        if (key === 'recurring.sum' && options) {
+          return `Somme des paiements récurrents : ${options.sum}`;
+        }
+        return key;
+      },
+      i18n: { language: 'fr' },
+    } as unknown as ReturnType<typeof useTranslation>);
+
+    render(<ApplicationStatusBar activeTab={1} recurrings={mockRecurrings} />);
+    expect(screen.getByText('Somme des paiements récurrents : $530.00')).toBeInTheDocument();
+  });
+
+  it('does not render recurring sum when on recurrings tab but no recurrings', () => {
+    vi.mocked(useBalance).mockReturnValue({ balance: 0, loading: false, hasTransactions: false });
+    vi.mocked(useAccount).mockReturnValue({ 
+      selectedAccount: null, 
+      selectedDate: dayjs(),
+      setSelectedAccount: vi.fn(),
+      setSelectedDate: vi.fn(),
+      transactionsVersion: 0,
+      setTransactionsVersion: vi.fn(),
+      isInitializing: false,
+      selectedTransactions: [],
+      setSelectedTransactions: vi.fn()
+    } as AccountContextType);
+    vi.mocked(useTranslation).mockReturnValue({
+      t: mockT,
+      i18n: { language: 'fr' },
+    } as unknown as ReturnType<typeof useTranslation>);
+
+    render(<ApplicationStatusBar activeTab={1} recurrings={[]} />);
+    expect(screen.queryByText(/Somme des paiements récurrents/)).not.toBeInTheDocument();
+  });
+
+  it('excludes inactive recurrings with past endDate from sum', () => {
+    const mockRecurrings: Recurring[] = [
+      { id: 'r1', accountId: '1', label: 'Active Rent', amount: 500, dayOfMonth: 1, startDate: '2024-01-01' },
+      { id: 'r2', accountId: '1', label: 'Ended Gym', amount: 30, dayOfMonth: 15, startDate: '2024-01-01', endDate: '2023-12-31' },
+    ];
+    vi.mocked(useBalance).mockReturnValue({ balance: 0, loading: false, hasTransactions: false });
+    vi.mocked(useAccount).mockReturnValue({ 
+      selectedAccount: null, 
+      selectedDate: dayjs(),
+      setSelectedAccount: vi.fn(),
+      setSelectedDate: vi.fn(),
+      transactionsVersion: 0,
+      setTransactionsVersion: vi.fn(),
+      isInitializing: false,
+      selectedTransactions: [],
+      setSelectedTransactions: vi.fn()
+    } as AccountContextType);
+    vi.mocked(useTranslation).mockReturnValue({
+      t: (key: string, options?: { sum: string }) => {
+        if (key === 'recurring.sum' && options) {
+          return `Somme des paiements récurrents : ${options.sum}`;
+        }
+        return key;
+      },
+      i18n: { language: 'fr' },
+    } as unknown as ReturnType<typeof useTranslation>);
+
+    render(<ApplicationStatusBar activeTab={1} recurrings={mockRecurrings} />);
+    expect(screen.getByText('Somme des paiements récurrents : $500.00')).toBeInTheDocument();
   });
 });
