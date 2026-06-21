@@ -85,8 +85,24 @@
     "error_file_read": "Failed to read the file"
   },
   "tabs": {
+    "dashboard": "Dashboard",
     "transactions": "Transactions",
     "recurrings": "Recurring Payments"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "no_account_selected": "Please select an account to view the dashboard.",
+    "account_summary_title": "{{accountLabel}} - {{date}}",
+    "non_recurring_incomes_title": "Non-recurring income",
+    "no_incomes": "No non-recurring income for this period.",
+    "balance_table_title": "Account balances",
+    "balance_today": "Today's balance",
+    "balance_forecast": "Forecasted end of month balance",
+    "chart_title": "Financial flow tracking",
+    "chart_incomes": "Incomes",
+    "chart_incomes_recurring": "Recurring incomes",
+    "chart_expenses": "Account balance",
+    "chart_day": "Day {{day}}"
   },
   "recurring": {
     "title": "Recurring Templates",

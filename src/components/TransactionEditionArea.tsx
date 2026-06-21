@@ -16,6 +16,7 @@ import ExportTransactionDialog from './ExportTransactionDialog';
 import ImportTransactionDialog from './ImportTransactionDialog';
 import ExportRecurringDialog from './ExportRecurringDialog';
 import ImportRecurringDialog from './ImportRecurringDialog';
+import DashboardTab from './DashboardTab';
 import TransactionsTab from './TransactionsTab';
 import RecurringsTab from './RecurringsTab';
 import './TransactionEditionArea.css';
@@ -299,13 +300,13 @@ const TransactionEditionArea: React.FC<TransactionEditionAreaProps> = ({
             {mode === 'dark' ? <Brightness7 fontSize="small" /> : <Brightness4 fontSize="small" />}
           </IconButton>
 
-          <Tooltip title={activeTab === 1 ? t('recurring.export_title') : t('export.title')}>
-            <IconButton onClick={() => setIsExportDialogOpen(true)} disabled={!selectedAccount} size="small">
+          <Tooltip title={activeTab === 2 ? t('recurring.export_title') : t('export.title')}>
+            <IconButton onClick={() => setIsExportDialogOpen(true)} disabled={!selectedAccount || activeTab === 0} size="small">
               <Download fontSize="small" />
             </IconButton>
           </Tooltip>
-          <Tooltip title={activeTab === 1 ? t('recurring.import_title') : t('import.title')}>
-            <IconButton onClick={() => setIsImportDialogOpen(true)} disabled={!selectedAccount} size="small">
+          <Tooltip title={activeTab === 2 ? t('recurring.import_title') : t('import.title')}>
+            <IconButton onClick={() => setIsImportDialogOpen(true)} disabled={!selectedAccount || activeTab === 0} size="small">
               <Upload fontSize="small" />
             </IconButton>
           </Tooltip>
@@ -315,12 +316,17 @@ const TransactionEditionArea: React.FC<TransactionEditionAreaProps> = ({
       <Paper className="right-container" elevation={0} variant="outlined">
         <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
           <Tabs value={activeTab} onChange={(_e, newValue) => onActiveTabChange(newValue)} aria-label="tabs">
+            <Tab label={t('tabs.dashboard')} />
             <Tab label={t('tabs.transactions')} />
             <Tab label={t('tabs.recurrings')} />
           </Tabs>
         </Box>
 
         {activeTab === 0 && (
+          <DashboardTab />
+        )}
+
+        {activeTab === 1 && (
           <TransactionsTab
             databaseTransactions={databaseTransactions}
             onTransactionsChanged={handleTransactionsChanged}
@@ -328,7 +334,7 @@ const TransactionEditionArea: React.FC<TransactionEditionAreaProps> = ({
           />
         )}
 
-        {activeTab === 1 && (
+        {activeTab === 2 && (
           <RecurringsTab
             recurrings={parentRecurrings}
             onRecurringsChanged={handleRecurringsChanged}
@@ -349,28 +355,28 @@ const TransactionEditionArea: React.FC<TransactionEditionAreaProps> = ({
       />
 
       <ExportTransactionDialog
-        open={isExportDialogOpen && activeTab === 0}
+        open={isExportDialogOpen && activeTab === 1}
         onClose={() => setIsExportDialogOpen(false)}
         transactions={databaseTransactions}
         onExport={handleExport}
       />
 
       <ImportTransactionDialog
-        open={isImportDialogOpen && activeTab === 0}
+        open={isImportDialogOpen && activeTab === 1}
         onClose={() => setIsImportDialogOpen(false)}
         onImportSuccess={handleImportSuccess}
         onError={handleImportError}
       />
 
       <ExportRecurringDialog
-        open={isExportDialogOpen && activeTab === 1}
+        open={isExportDialogOpen && activeTab === 2}
         onClose={() => setIsExportDialogOpen(false)}
         recurrings={parentRecurrings}
         onExport={handleRecurringExport}
       />
 
       <ImportRecurringDialog
-        open={isImportDialogOpen && activeTab === 1}
+        open={isImportDialogOpen && activeTab === 2}
         onClose={() => setIsImportDialogOpen(false)}
         onImportSuccess={handleRecurringImportSuccess}
         onError={handleRecurringImportError}

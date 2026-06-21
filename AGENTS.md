@@ -11,6 +11,7 @@ Tiny Compta is a lightweight, browser-based bank account management application 
 - **Icons:** Material Icons
 - **Date/Time Handling:** Dayjs (with French locale)
 - **Date Pickers:** MUI X Date Pickers
+- **Charts:** MUI X-Charts (used in Dashboard tab)
 - **Persistence:** IndexedDB via the `idb` package
 - **ID Generation:** `uuid` package
 - **Build System:** Vite
@@ -24,6 +25,7 @@ Tiny Compta is a lightweight, browser-based bank account management application 
 - Always use i18n for all user-facing text to ensure multi-language support.
 - When adding new text, always update the corresponding translation files in `src/locales/{lang}/translation.json` for all supported languages.
 - Always write a test case once a task is done.
+- Always implement charts using `@mui/x-charts` with dynamic theme detection (`useTheme`) to ensure support for both light and dark modes.
 - Definition of done is: build pass, lint pass and a test case is covering the feature.
 
 ## 4. Desktop App (Tauri v2)

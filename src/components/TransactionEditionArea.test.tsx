@@ -99,14 +99,14 @@ describe('TransactionEditionArea', () => {
       selectedTransactions: [],
       setSelectedTransactions: vi.fn()
     });
-    renderWithProviders(<TransactionEditionArea activeTab={0} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
+    renderWithProviders(<TransactionEditionArea activeTab={1} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
 
     expect(screen.getByText(/select account/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /create transaction/i })).toBeDisabled();
   });
 
   it('loads and displays transactions when an account is selected', async () => {
-    renderWithProviders(<TransactionEditionArea activeTab={0} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
+    renderWithProviders(<TransactionEditionArea activeTab={1} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
 
     await waitFor(() => {
       expect(dbService.getTransactionsByAccountId).toHaveBeenCalledWith(mockAccount.id);
@@ -119,7 +119,7 @@ describe('TransactionEditionArea', () => {
   });
 
   it('opens TransactionEditor in create mode when "Create" button is clicked', async () => {
-    renderWithProviders(<TransactionEditionArea activeTab={0} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
+    renderWithProviders(<TransactionEditionArea activeTab={1} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
 
     const createButton = screen.getByRole('button', { name: /create transaction/i });
     fireEvent.click(createButton);
@@ -128,7 +128,7 @@ describe('TransactionEditionArea', () => {
   });
 
   it('opens TransactionEditor in edit mode when edit icon is clicked', async () => {
-    renderWithProviders(<TransactionEditionArea activeTab={0} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
+    renderWithProviders(<TransactionEditionArea activeTab={1} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
 
     await waitFor(() => {
       expect(screen.getByText('Transaction 1')).toBeInTheDocument();
@@ -141,7 +141,7 @@ describe('TransactionEditionArea', () => {
   });
 
   it('opens TransactionEditor in clone mode when copy icon is clicked', async () => {
-    renderWithProviders(<TransactionEditionArea activeTab={0} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
+    renderWithProviders(<TransactionEditionArea activeTab={1} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
 
     await waitFor(() => {
       expect(screen.getByText('Transaction 1')).toBeInTheDocument();
@@ -154,7 +154,7 @@ describe('TransactionEditionArea', () => {
   });
 
   it('opens ConfirmDialog when delete icon is clicked', async () => {
-    renderWithProviders(<TransactionEditionArea activeTab={0} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
+    renderWithProviders(<TransactionEditionArea activeTab={1} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
 
     await waitFor(() => {
       expect(screen.getByText('Transaction 1')).toBeInTheDocument();
@@ -167,7 +167,7 @@ describe('TransactionEditionArea', () => {
   });
 
   it('deletes the transaction when confirmed', async () => {
-    renderWithProviders(<TransactionEditionArea activeTab={0} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
+    renderWithProviders(<TransactionEditionArea activeTab={1} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
 
     await waitFor(() => {
       expect(screen.getByText('Transaction 1')).toBeInTheDocument();
@@ -217,7 +217,7 @@ describe('TransactionEditionArea', () => {
     ];
 
     vi.mocked(dbService.getTransactionsByAccountId).mockResolvedValue(unsortedTransactions);
-    renderWithProviders(<TransactionEditionArea activeTab={0} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
+    renderWithProviders(<TransactionEditionArea activeTab={1} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
 
     await waitFor(() => {
       expect(screen.getByText('Transaction 3')).toBeInTheDocument();
@@ -254,7 +254,7 @@ describe('TransactionEditionArea', () => {
       },
     ];
     vi.mocked(dbService.getTransactionsByAccountId).mockResolvedValue(transactionsWithOld);
-    renderWithProviders(<TransactionEditionArea activeTab={0} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
+    renderWithProviders(<TransactionEditionArea activeTab={1} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
 
     await waitFor(() => {
       expect(screen.getByText('New Transaction')).toBeInTheDocument();
@@ -263,7 +263,7 @@ describe('TransactionEditionArea', () => {
   });
 
   it('opens the filter dialog when filter button is clicked', async () => {
-    renderWithProviders(<TransactionEditionArea activeTab={0} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
+    renderWithProviders(<TransactionEditionArea activeTab={1} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
 
     const filterButton = screen.getByRole('button', { name: /filter/i });
     fireEvent.click(filterButton);
@@ -272,7 +272,7 @@ describe('TransactionEditionArea', () => {
   });
 
   it('shows export dialog when download button is clicked', async () => {
-    renderWithProviders(<TransactionEditionArea activeTab={0} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
+    renderWithProviders(<TransactionEditionArea activeTab={1} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
 
     const exportButton = screen.getByRole('button', { name: /export/i });
     fireEvent.click(exportButton);
@@ -281,7 +281,7 @@ describe('TransactionEditionArea', () => {
   });
 
   it('shows import dialog when upload button is clicked', async () => {
-    renderWithProviders(<TransactionEditionArea activeTab={0} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
+    renderWithProviders(<TransactionEditionArea activeTab={1} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
 
     const importButton = screen.getByRole('button', { name: /import/i });
     fireEvent.click(importButton);
@@ -290,7 +290,7 @@ describe('TransactionEditionArea', () => {
   });
 
   it('renders export dialog with export button when download icon is clicked', async () => {
-    renderWithProviders(<TransactionEditionArea activeTab={0} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
+    renderWithProviders(<TransactionEditionArea activeTab={1} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
 
     const exportIconButton = screen.getByRole('button', { name: /export/i });
     fireEvent.click(exportIconButton);
@@ -300,7 +300,7 @@ describe('TransactionEditionArea', () => {
   });
 
   it('toggles filter when checkbox is clicked in filter dialog', async () => {
-    renderWithProviders(<TransactionEditionArea activeTab={0} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
+    renderWithProviders(<TransactionEditionArea activeTab={1} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
 
     const filterButton = screen.getByRole('button', { name: /filter/i });
     fireEvent.click(filterButton);
@@ -313,7 +313,7 @@ describe('TransactionEditionArea', () => {
   });
 
   it('shows import dialog with file input when upload icon is clicked', async () => {
-    renderWithProviders(<TransactionEditionArea activeTab={0} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
+    renderWithProviders(<TransactionEditionArea activeTab={1} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
 
     const importIconButton = screen.getByRole('button', { name: /import/i });
     fireEvent.click(importIconButton);
@@ -324,7 +324,7 @@ describe('TransactionEditionArea', () => {
 
   it('shows "no transactions" message when account has no transactions', async () => {
     vi.mocked(dbService.getTransactionsByAccountId).mockResolvedValue([]);
-    renderWithProviders(<TransactionEditionArea activeTab={0} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
+    renderWithProviders(<TransactionEditionArea activeTab={1} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
 
     expect(await screen.findByText(/no transactions/i)).toBeInTheDocument();
   });
@@ -350,7 +350,7 @@ describe('TransactionEditionArea', () => {
       },
     ];
     vi.mocked(dbService.getTransactionsByAccountId).mockResolvedValue(transactionsWithToday);
-    renderWithProviders(<TransactionEditionArea activeTab={0} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
+    renderWithProviders(<TransactionEditionArea activeTab={1} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
 
     await waitFor(() => {
       expect(screen.getByText('Today Transaction')).toBeInTheDocument();
@@ -374,7 +374,7 @@ describe('TransactionEditionArea', () => {
   });
 
   it('displays search by label textfield in toolbar', async () => {
-    renderWithProviders(<TransactionEditionArea activeTab={0} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
+    renderWithProviders(<TransactionEditionArea activeTab={1} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
 
     await waitFor(() => {
       expect(screen.getByText('Transaction 1')).toBeInTheDocument();
@@ -384,7 +384,7 @@ describe('TransactionEditionArea', () => {
   });
 
   it('filters transactions by label when typing in search field', async () => {
-    renderWithProviders(<TransactionEditionArea activeTab={0} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
+    renderWithProviders(<TransactionEditionArea activeTab={1} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
 
     await waitFor(() => {
       expect(screen.getByText('Transaction 1')).toBeInTheDocument();
@@ -398,7 +398,7 @@ describe('TransactionEditionArea', () => {
   });
 
   it('shows all transactions when search field is cleared', async () => {
-    renderWithProviders(<TransactionEditionArea activeTab={0} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
+    renderWithProviders(<TransactionEditionArea activeTab={1} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
 
     await waitFor(() => {
       expect(screen.getByText('Transaction 1')).toBeInTheDocument();
@@ -420,7 +420,7 @@ describe('TransactionEditionArea', () => {
   });
 
   it('performs case-insensitive label search', async () => {
-    renderWithProviders(<TransactionEditionArea activeTab={0} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
+    renderWithProviders(<TransactionEditionArea activeTab={1} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
 
     await waitFor(() => {
       expect(screen.getByText('Transaction 1')).toBeInTheDocument();
@@ -434,7 +434,7 @@ describe('TransactionEditionArea', () => {
   });
 
   it('shows no transactions when search matches nothing', async () => {
-    renderWithProviders(<TransactionEditionArea activeTab={0} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
+    renderWithProviders(<TransactionEditionArea activeTab={1} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
 
     await waitFor(() => {
       expect(screen.getByText('Transaction 1')).toBeInTheDocument();
@@ -449,7 +449,7 @@ describe('TransactionEditionArea', () => {
   });
 
   it('renders checkbox for each transaction', async () => {
-    renderWithProviders(<TransactionEditionArea activeTab={0} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
+    renderWithProviders(<TransactionEditionArea activeTab={1} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
 
     await waitFor(() => {
       expect(screen.getByText('Transaction 1')).toBeInTheDocument();
@@ -478,7 +478,7 @@ describe('TransactionEditionArea', () => {
     });
     vi.mocked(dbService.getTransactionsByAccountId).mockResolvedValue(mockTransactions);
 
-    renderWithProviders(<TransactionEditionArea activeTab={0} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
+    renderWithProviders(<TransactionEditionArea activeTab={1} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
 
     await waitFor(() => {
       expect(screen.getByText('Transaction 1')).toBeInTheDocument();
@@ -504,7 +504,7 @@ describe('TransactionEditionArea', () => {
     });
     vi.mocked(dbService.getTransactionsByAccountId).mockResolvedValue(mockTransactions);
 
-    renderWithProviders(<TransactionEditionArea activeTab={0} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
+    renderWithProviders(<TransactionEditionArea activeTab={1} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
 
     await waitFor(() => {
       expect(screen.getByText('Transaction 1')).toBeInTheDocument();
@@ -530,7 +530,7 @@ describe('TransactionEditionArea', () => {
     });
     vi.mocked(dbService.getTransactionsByAccountId).mockResolvedValue(mockTransactions);
 
-    renderWithProviders(<TransactionEditionArea activeTab={0} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
+    renderWithProviders(<TransactionEditionArea activeTab={1} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
 
     await waitFor(() => {
       expect(screen.getByText('Transaction 1')).toBeInTheDocument();
@@ -542,7 +542,7 @@ describe('TransactionEditionArea', () => {
   });
 
   it('disables the remove selected button when no transactions are selected', async () => {
-    renderWithProviders(<TransactionEditionArea activeTab={0} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
+    renderWithProviders(<TransactionEditionArea activeTab={1} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
 
     await waitFor(() => {
       expect(screen.getByText('Transaction 1')).toBeInTheDocument();
@@ -567,7 +567,7 @@ describe('TransactionEditionArea', () => {
     });
     vi.mocked(dbService.getTransactionsByAccountId).mockResolvedValue(mockTransactions);
 
-    renderWithProviders(<TransactionEditionArea activeTab={0} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
+    renderWithProviders(<TransactionEditionArea activeTab={1} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
 
     await waitFor(() => {
       expect(screen.getByText('Transaction 1')).toBeInTheDocument();
@@ -592,7 +592,7 @@ describe('TransactionEditionArea', () => {
     });
     vi.mocked(dbService.getTransactionsByAccountId).mockResolvedValue(mockTransactions);
 
-    renderWithProviders(<TransactionEditionArea activeTab={0} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
+    renderWithProviders(<TransactionEditionArea activeTab={1} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
 
     await waitFor(() => {
       expect(screen.getByText('Transaction 1')).toBeInTheDocument();
@@ -620,7 +620,7 @@ describe('TransactionEditionArea', () => {
     vi.mocked(dbService.getTransactionsByAccountId).mockResolvedValue(mockTransactions);
     vi.mocked(dbService.deleteTransaction).mockResolvedValue(undefined);
 
-    renderWithProviders(<TransactionEditionArea activeTab={0} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
+    renderWithProviders(<TransactionEditionArea activeTab={1} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
 
     await waitFor(() => {
       expect(screen.getByText('Transaction 1')).toBeInTheDocument();
@@ -651,7 +651,7 @@ describe('TransactionEditionArea', () => {
     ];
     vi.mocked(dbService.getRecurringsByAccountId).mockResolvedValue(mockRecs);
 
-    renderWithProviders(<TransactionEditionArea activeTab={1} onActiveTabChange={vi.fn()} recurrings={mockRecs} onRecurringsChange={vi.fn()} />);
+    renderWithProviders(<TransactionEditionArea activeTab={2} onActiveTabChange={vi.fn()} recurrings={mockRecs} onRecurringsChange={vi.fn()} />);
 
     expect(screen.getByText('Internet Subscription')).toBeInTheDocument();
     expect(screen.getByText('Monthly Fiber')).toBeInTheDocument();
@@ -679,7 +679,7 @@ describe('TransactionEditionArea', () => {
     ];
     vi.mocked(dbService.getRecurringsByAccountId).mockResolvedValue(mockRecs);
 
-    renderWithProviders(<TransactionEditionArea activeTab={1} onActiveTabChange={vi.fn()} recurrings={mockRecs} onRecurringsChange={vi.fn()} />);
+    renderWithProviders(<TransactionEditionArea activeTab={2} onActiveTabChange={vi.fn()} recurrings={mockRecs} onRecurringsChange={vi.fn()} />);
 
     const tableContainer = document.querySelector('.table-container') as HTMLElement;
     const tableRows = tableContainer.querySelectorAll('tbody tr');
@@ -701,7 +701,7 @@ describe('TransactionEditionArea', () => {
     ];
     vi.mocked(dbService.getRecurringsByAccountId).mockResolvedValue(mockRecs);
 
-    renderWithProviders(<TransactionEditionArea activeTab={0} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
+    renderWithProviders(<TransactionEditionArea activeTab={1} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
 
     expect(await screen.findByText(/recurring payments/i, { selector: 'h2' })).toBeInTheDocument();
     expect(screen.getByText(/would you like to apply recurring payments for the month of/i)).toBeInTheDocument();
@@ -711,7 +711,7 @@ describe('TransactionEditionArea', () => {
     vi.mocked(dbService.getSettingByKey).mockResolvedValue(undefined); // No applied key
     vi.mocked(dbService.getRecurringsByAccountId).mockResolvedValue([]); // No recurrings
 
-    renderWithProviders(<TransactionEditionArea activeTab={0} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
+    renderWithProviders(<TransactionEditionArea activeTab={1} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
 
     await waitFor(() => {
       expect(dbService.getRecurringsByAccountId).toHaveBeenCalledWith(mockAccount.id);
@@ -767,7 +767,7 @@ describe('TransactionEditionArea', () => {
     vi.mocked(dbService.deleteTransaction).mockResolvedValue(undefined);
     vi.mocked(dbService.addTransaction).mockResolvedValue(undefined);
 
-    renderWithProviders(<TransactionEditionArea activeTab={0} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
+    renderWithProviders(<TransactionEditionArea activeTab={1} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
 
     expect(await screen.findByText(/recurring payments/i, { selector: 'h2' })).toBeInTheDocument();
     const confirmButton = screen.getByRole('button', { name: /yes/i });
@@ -807,7 +807,7 @@ describe('TransactionEditionArea', () => {
     ];
     vi.mocked(dbService.getRecurringsByAccountId).mockResolvedValue(mockRecs);
 
-    renderWithProviders(<TransactionEditionArea activeTab={1} onActiveTabChange={vi.fn()} recurrings={mockRecs} onRecurringsChange={vi.fn()} />);
+    renderWithProviders(<TransactionEditionArea activeTab={2} onActiveTabChange={vi.fn()} recurrings={mockRecs} onRecurringsChange={vi.fn()} />);
 
     const deleteButton = await screen.findByRole('button', { name: /delete recurring/i });
     fireEvent.click(deleteButton);
@@ -828,7 +828,7 @@ describe('TransactionEditionArea', () => {
     ];
     vi.mocked(dbService.getRecurringsByAccountId).mockResolvedValue(mockRecs);
 
-    renderWithProviders(<TransactionEditionArea activeTab={1} onActiveTabChange={vi.fn()} recurrings={mockRecs} onRecurringsChange={vi.fn()} />);
+    renderWithProviders(<TransactionEditionArea activeTab={2} onActiveTabChange={vi.fn()} recurrings={mockRecs} onRecurringsChange={vi.fn()} />);
 
     const exportButton = screen.getByRole('button', { name: /export/i });
     fireEvent.click(exportButton);
@@ -848,7 +848,7 @@ describe('TransactionEditionArea', () => {
     ];
     vi.mocked(dbService.getRecurringsByAccountId).mockResolvedValue(mockRecs);
 
-    renderWithProviders(<TransactionEditionArea activeTab={1} onActiveTabChange={vi.fn()} recurrings={mockRecs} onRecurringsChange={vi.fn()} />);
+    renderWithProviders(<TransactionEditionArea activeTab={2} onActiveTabChange={vi.fn()} recurrings={mockRecs} onRecurringsChange={vi.fn()} />);
 
     const importButton = screen.getByRole('button', { name: /import/i });
     fireEvent.click(importButton);

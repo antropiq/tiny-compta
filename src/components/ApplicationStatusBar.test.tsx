@@ -224,7 +224,7 @@ describe('ApplicationStatusBar', () => {
       i18n: { language: 'fr' },
     } as unknown as ReturnType<typeof useTranslation>);
 
-    render(<ApplicationStatusBar activeTab={1} recurrings={mockRecurrings} />);
+    render(<ApplicationStatusBar activeTab={2} recurrings={mockRecurrings} />);
     expect(screen.getByText('Somme des paiements récurrents : $530.00')).toBeInTheDocument();
   });
 
@@ -246,7 +246,7 @@ describe('ApplicationStatusBar', () => {
       i18n: { language: 'fr' },
     } as unknown as ReturnType<typeof useTranslation>);
 
-    render(<ApplicationStatusBar activeTab={1} recurrings={[]} />);
+    render(<ApplicationStatusBar activeTab={2} recurrings={[]} />);
     expect(screen.queryByText(/Somme des paiements récurrents/)).not.toBeInTheDocument();
   });
 
@@ -277,7 +277,7 @@ describe('ApplicationStatusBar', () => {
       i18n: { language: 'fr' },
     } as unknown as ReturnType<typeof useTranslation>);
 
-    render(<ApplicationStatusBar activeTab={1} recurrings={mockRecurrings} />);
+    render(<ApplicationStatusBar activeTab={2} recurrings={mockRecurrings} />);
     expect(screen.getByText('Somme des paiements récurrents : $500.00')).toBeInTheDocument();
   });
 });

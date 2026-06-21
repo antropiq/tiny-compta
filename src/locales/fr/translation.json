@@ -85,8 +85,24 @@
     "error_file_read": "Échec de la lecture du fichier"
   },
   "tabs": {
+    "dashboard": "Tableau de Bord",
     "transactions": "Transactions",
     "recurrings": "Paiements Récurrents"
+  },
+  "dashboard": {
+    "title": "Tableau de Bord",
+    "no_account_selected": "Veuillez sélectionner un compte pour afficher le tableau de bord.",
+    "account_summary_title": "{{accountLabel}} - {{date}}",
+    "non_recurring_incomes_title": "Entrées hors récurrents",
+    "no_incomes": "Aucune entrée hors récurrents sur cette période.",
+    "balance_table_title": "Soldes du compte",
+    "balance_today": "Solde aujourd'hui",
+    "balance_forecast": "Solde prévisionnel fin de mois",
+    "chart_title": "Suivi des flux financiers",
+    "chart_incomes": "Entrées",
+    "chart_incomes_recurring": "Entrées récurrentes",
+    "chart_expenses": "Solde du compte",
+    "chart_day": "Jour {{day}}"
   },
   "recurring": {
     "title": "Modèles de Récurrents",
