@@ -39,7 +39,7 @@ const ApplicationStatusBar: React.FC<ApplicationStatusBarProps> = ({ activeTab, 
         )}
       </div>
       <div className="status-center">
-        {activeTab === 1 && recurrings.length > 0 && (
+        {activeTab === 2 && recurrings.length > 0 && (
           t('recurring.sum', {
             sum: formattedRecurringSum
           })

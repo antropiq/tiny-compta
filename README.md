@@ -6,6 +6,7 @@
 
 ## Features
 
+- **Dashboard:** Interactive tracking of cumulative/daily inflows and outflows with MUI X-Charts, including account balances (today and forecasted end-of-month) and detailed tables of non-recurring incomes.
 - Manage multiple bank accounts
 - Track transactions with labels, descriptions, amounts, and due dates
 - Manage recurring payment plans with custom intervals, start/end dates, and automatic/manual generation
@@ -18,6 +19,7 @@
 
 - **Framework:** React 19 + TypeScript + Vite
 - **UI:** Material UI (MUI) 9
+- **Charts:** MUI X-Charts
 - **Dates:** Day.js + MUI X Date Pickers
 - **Persistence:** IndexedDB (`idb`)
 - **i18n:** i18next + react-i18next
