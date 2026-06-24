@@ -4,14 +4,12 @@ import type { SelectChangeEvent } from '@mui/material';
 import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
 import { Download, Upload, Brightness4, Brightness7 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
-import dayjs from 'dayjs';
 import type { Transaction } from '../types/transaction';
 import type { Recurring } from '../types/recurring';
 import { useAccount } from '../hooks/useAccount';
 import { dbService } from '../services/db';
 import { useAppTheme } from '../providers/ThemeContext';
 import AccountList from './AccountList';
-import RecurringApplyPromptDialog from './RecurringApplyPromptDialog';
 import ExportTransactionDialog from './ExportTransactionDialog';
 import ImportTransactionDialog from './ImportTransactionDialog';
 import ExportRecurringDialog from './ExportRecurringDialog';
@@ -58,10 +56,6 @@ const TransactionEditionArea: React.FC<TransactionEditionAreaProps> = ({
     severity: 'info',
   });
 
-
-  const [isApplyPromptOpen, setIsApplyPromptOpen] = useState(false);
-  const [applyPromptMonth, setApplyPromptMonth] = useState('');
-  const [applyPromptMonthName, setApplyPromptMonthName] = useState('');
 
   const handleCloseSnackbar = () => {
     setSnackbar(prev => ({ ...prev, open: false }));
@@ -169,44 +163,6 @@ const TransactionEditionArea: React.FC<TransactionEditionAreaProps> = ({
 
     handleOpenSnackbar(t('recurring.apply_success', { date: monthStr }), 'success');
   }, [selectedAccount, t, setTransactionsVersion, refreshTransactions, handleOpenSnackbar]);
-
-  const checkAutoApplyRecurrings = useCallback(async () => {
-    if (!selectedAccount) return;
-
-    const accountRecurrings = await dbService.getRecurringsByAccountId(selectedAccount.id);
-    if (accountRecurrings.length === 0) return;
-
-    const today = dayjs();
-    const currentMonthStr = today.format('YYYY-MM');
-    const currentMonthKey = `applied_recurrings_${selectedAccount.id}_${currentMonthStr}`;
-
-    const currentMonthSetting = await dbService.getSettingByKey(currentMonthKey);
-    if (!currentMonthSetting || currentMonthSetting.value !== 'true') {
-      setApplyPromptMonth(currentMonthStr);
-      setApplyPromptMonthName(today.locale(i18n.language).format('MMMM YYYY'));
-      setIsApplyPromptOpen(true);
-      return;
-    }
-
-    const daysInMonth = today.daysInMonth();
-    const isLast5Days = today.date() > (daysInMonth - 5);
-    if (isLast5Days) {
-      const nextMonth = today.add(1, 'month');
-      const nextMonthStr = nextMonth.format('YYYY-MM');
-      const nextMonthKey = `applied_recurrings_${selectedAccount.id}_${nextMonthStr}`;
-      const nextMonthSetting = await dbService.getSettingByKey(nextMonthKey);
-      if (!nextMonthSetting || nextMonthSetting.value !== 'true') {
-        setApplyPromptMonth(nextMonthStr);
-        setApplyPromptMonthName(nextMonth.locale(i18n.language).format('MMMM YYYY'));
-        setIsApplyPromptOpen(true);
-      }
-    }
-  }, [selectedAccount, i18n.language]);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    checkAutoApplyRecurrings();
-  }, [selectedAccount, checkAutoApplyRecurrings]);
 
   const handleExport = (data: string, filename: string, type: 'json' | 'csv') => {
     const blob = new Blob([data], { type: type === 'json' ? 'application/json' : 'text/csv' });
@@ -343,16 +299,6 @@ const TransactionEditionArea: React.FC<TransactionEditionAreaProps> = ({
           />
         )}
       </Paper>
-
-      <RecurringApplyPromptDialog
-        open={isApplyPromptOpen}
-        onClose={() => setIsApplyPromptOpen(false)}
-        onConfirm={() => {
-          applyRecurringsForMonth(applyPromptMonth);
-          setIsApplyPromptOpen(false);
-        }}
-        monthName={applyPromptMonthName}
-      />
 
       <ExportTransactionDialog
         open={isExportDialogOpen && activeTab === 1}

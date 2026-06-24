@@ -84,7 +84,6 @@ describe('TransactionEditionArea', () => {
     });
     vi.mocked(dbService.getTransactionsByAccountId).mockResolvedValue(mockTransactions);
     vi.mocked(dbService.getRecurringsByAccountId).mockResolvedValue([]);
-    vi.mocked(dbService.getSettingByKey).mockResolvedValue({ id: 's1', key: 'applied_recurrings_account-1_2026-06', value: 'true' });
   });
 
   it('shows "select account" message when no account is selected', async () => {
@@ -687,42 +686,7 @@ describe('TransactionEditionArea', () => {
     expect(tableRows[1]).toHaveTextContent('Internet Subscription');
   });
 
-  it('prompts to apply recurrings if not already applied for the current month', async () => {
-    vi.mocked(dbService.getSettingByKey).mockResolvedValue(undefined); // No applied key
-    const mockRecs = [
-      {
-        id: 'rec-1',
-        accountId: 'account-1',
-        label: 'Internet Subscription',
-        amount: -29.99,
-        dayOfMonth: 10,
-        startDate: '2026-01-01',
-      },
-    ];
-    vi.mocked(dbService.getRecurringsByAccountId).mockResolvedValue(mockRecs);
-
-    renderWithProviders(<TransactionEditionArea activeTab={1} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
-
-    expect(await screen.findByText(/recurring payments/i, { selector: 'h2' })).toBeInTheDocument();
-    expect(screen.getByText(/would you like to apply recurring payments for the month of/i)).toBeInTheDocument();
-  });
-
-  it('does not prompt to apply recurrings if there are no recurrings for the account', async () => {
-    vi.mocked(dbService.getSettingByKey).mockResolvedValue(undefined); // No applied key
-    vi.mocked(dbService.getRecurringsByAccountId).mockResolvedValue([]); // No recurrings
-
-    renderWithProviders(<TransactionEditionArea activeTab={1} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
-
-    await waitFor(() => {
-      expect(dbService.getRecurringsByAccountId).toHaveBeenCalledWith(mockAccount.id);
-    });
-
-    expect(screen.queryByText(/would you like to apply recurring payments for the month of/i)).not.toBeInTheDocument();
-  });
-
   it('synchronizes recurring transactions on apply: adds new, updates modified, and deletes removed', async () => {
-    vi.mocked(dbService.getSettingByKey).mockResolvedValue(undefined);
-
     const mockRecs = [
       {
         id: 'rec-1',
@@ -767,11 +731,11 @@ describe('TransactionEditionArea', () => {
     vi.mocked(dbService.deleteTransaction).mockResolvedValue(undefined);
     vi.mocked(dbService.addTransaction).mockResolvedValue(undefined);
 
-    renderWithProviders(<TransactionEditionArea activeTab={1} onActiveTabChange={vi.fn()} recurrings={[]} onRecurringsChange={vi.fn()} />);
+    renderWithProviders(<TransactionEditionArea activeTab={2} onActiveTabChange={vi.fn()} recurrings={mockRecs} onRecurringsChange={vi.fn()} />);
 
-    expect(await screen.findByText(/recurring payments/i, { selector: 'h2' })).toBeInTheDocument();
-    const confirmButton = screen.getByRole('button', { name: /yes/i });
-    fireEvent.click(confirmButton);
+    // Find and click the "Apply to selected month" button in the RecurringToolbar
+    const applyButton = screen.getByRole('button', { name: /apply to selected month/i });
+    fireEvent.click(applyButton);
 
     await waitFor(() => {
       expect(dbService.deleteTransaction).toHaveBeenCalledWith('tx-old-removed');
