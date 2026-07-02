@@ -32,7 +32,7 @@
   },
   "productName": "tiny-compta",
   "mainBinaryName": "tiny-compta",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "identifier": "org.vgr.tiny-compta",
   "plugins": {},
   "app": {

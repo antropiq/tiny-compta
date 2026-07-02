@@ -149,6 +149,7 @@ const RecurringsTab: React.FC<RecurringsTabProps> = ({
               <TableCell align="right">{t('transaction.amount')}</TableCell>
               <TableCell align="right">{t('recurring.dayOfMonth')}</TableCell>
               <TableCell>{t('recurring.startDate')} - {t('recurring.endDate')}</TableCell>
+              <TableCell align="right">{t('recurring.remaining')}</TableCell>
               <TableCell align="right" className="actions-cell">{t('transaction.actions')}</TableCell>
             </TableRow>
           </TableHead>
@@ -164,6 +165,12 @@ const RecurringsTab: React.FC<RecurringsTabProps> = ({
                     {FormatUtils.date(rec.startDate)}
                     {rec.endDate ? ` - ${FormatUtils.date(rec.endDate)}` : ''}
                   </TableCell>
+                  <TableCell align="right">
+                    {rec.endDate ? (() => {
+                      const months = dayjs(rec.endDate).startOf('month').diff(dayjs(selectedDate || rec.startDate).startOf('month'), 'month') + 1;
+                      return months > 0 ? FormatUtils.currency(Math.abs(rec.amount * months)) : '';
+                    })() : ''}
+                  </TableCell>
                   <TableCell className="actions-cell" align="right">
                     <IconButton size="small" onClick={() => handleEditRecurring(rec)} aria-label="edit recurring"><Edit fontSize="small" /></IconButton>
                     <IconButton size="small" onClick={() => handleDeleteRecurring(rec)} aria-label="delete recurring"><Delete fontSize="small" /></IconButton>
@@ -173,7 +180,7 @@ const RecurringsTab: React.FC<RecurringsTabProps> = ({
             })}
             {sortedRecurrings.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6} align="center">
+                <TableCell colSpan={7} align="center">
                   {selectedAccount ? t('transaction.no_transactions') : t('account.select')}
                 </TableCell>
               </TableRow>

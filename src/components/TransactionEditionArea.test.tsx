@@ -49,6 +49,9 @@ const renderWithProviders = (ui: React.ReactElement) => {
 
 describe('TransactionEditionArea', () => {
   const mockAccount = { id: 'account-1', label: 'Test Account' };
+  
+  // Generate test dates relative to current month to ensure tests pass regardless of when they run
+  const currentMonthStart = dayjs().startOf('month');
   const mockTransactions: Transaction[] = [
     {
       id: 'tx-1',
@@ -56,7 +59,7 @@ describe('TransactionEditionArea', () => {
       label: 'Transaction 1',
       description: 'Desc 1',
       amount: 10,
-      dueDate: '2026-06-01',
+      dueDate: currentMonthStart.format('YYYY-MM-DD'),
     },
     {
       id: 'tx-2',
@@ -64,7 +67,7 @@ describe('TransactionEditionArea', () => {
       label: 'Transaction 2',
       description: 'Desc 2',
       amount: 20,
-      dueDate: '2026-06-02',
+      dueDate: currentMonthStart.add(1, 'day').format('YYYY-MM-DD'),
     },
   ];
 
@@ -188,6 +191,7 @@ describe('TransactionEditionArea', () => {
   });
 
   it('displays transactions in ascending order of dueDate', async () => {
+    const currentMonthStart = dayjs().startOf('month');
     const unsortedTransactions: Transaction[] = [
       {
         id: 'tx-2',
@@ -195,7 +199,7 @@ describe('TransactionEditionArea', () => {
         label: 'Transaction 2',
         description: 'Desc 2',
         amount: 20,
-        dueDate: '2026-06-02',
+        dueDate: currentMonthStart.add(1, 'day').format('YYYY-MM-DD'),
       },
       {
         id: 'tx-1',
@@ -203,7 +207,7 @@ describe('TransactionEditionArea', () => {
         label: 'Transaction 1',
         description: 'Desc 1',
         amount: 10,
-        dueDate: '2026-06-01',
+        dueDate: currentMonthStart.format('YYYY-MM-DD'),
       },
       {
         id: 'tx-3',
@@ -211,7 +215,7 @@ describe('TransactionEditionArea', () => {
         label: 'Transaction 3',
         description: 'Desc 3',
         amount: 30,
-        dueDate: '2026-05-28',
+        dueDate: currentMonthStart.subtract(5, 'day').format('YYYY-MM-DD'),
       },
     ];
 
@@ -234,6 +238,7 @@ describe('TransactionEditionArea', () => {
   });
 
   it('applies the monthly view filter by default', async () => {
+    const currentMonthStart = dayjs().startOf('month');
     const transactionsWithOld: Transaction[] = [
       {
         id: 'tx-new',
@@ -241,7 +246,7 @@ describe('TransactionEditionArea', () => {
         label: 'New Transaction',
         description: 'New',
         amount: 10,
-        dueDate: '2026-06-01',
+        dueDate: currentMonthStart.format('YYYY-MM-DD'),
       },
       {
         id: 'tx-old',
@@ -249,7 +254,7 @@ describe('TransactionEditionArea', () => {
         label: 'Old Transaction',
         description: 'Old',
         amount: 10,
-        dueDate: '2026-01-01',
+        dueDate: currentMonthStart.subtract(10, 'day').format('YYYY-MM-DD'),
       },
     ];
     vi.mocked(dbService.getTransactionsByAccountId).mockResolvedValue(transactionsWithOld);

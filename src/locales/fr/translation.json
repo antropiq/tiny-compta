@@ -110,8 +110,8 @@
     "edit": "Modifier le paiement récurrent",
     "delete": "Supprimer le paiement récurrent",
     "dayOfMonth": "Jour du mois",
-    "startDate": "Date de début d'effet",
-    "endDate": "Date de fin (optionnelle)",
+    "startDate": "Date de début",
+    "endDate": "Date de fin",
     "apply_to_selected_month": "Appliquer au mois sélectionné",
     "apply_success": "Les paiements récurrents ont bien été appliqués pour {{date}}",
     "apply_prompt_title": "Paiements Récurrents",
@@ -126,6 +126,7 @@
     "import_success": "{{count}} paiements récurrents ont été importés dans le compte {{accountLabel}}",
     "import_error_invalid_format": "Le contenu JSON ne suit pas la bonne structure pour les paiements récurrents",
     "import_error_invalid_data": "Données invalides dans un ou plusieurs paiements récurrents. Importation annulée.",
-    "sum": "Somme des récurrents : {{sum}}"
+    "sum": "Somme des récurrents : {{sum}}",
+    "remaining": "Restant"
   }
 }
