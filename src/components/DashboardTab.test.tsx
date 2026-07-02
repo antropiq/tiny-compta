@@ -50,6 +50,7 @@ describe('DashboardTab', () => {
   const mockAccount: Account = { id: 'account-123', label: 'Main Checking' };
   const selectedDate = dayjs('2026-06-15');
 
+  // Generate mock transactions with dates relative to selectedDate for consistency
   const mockTransactions: Transaction[] = [
     {
       id: 'tx-1',
@@ -195,7 +196,14 @@ describe('DashboardTab', () => {
     expect(screen.getByText(/today's balance/i)).toBeInTheDocument();
     expect(screen.getByText(/forecasted end of month balance/i)).toBeInTheDocument();
 
-    expect(screen.getAllByText('$4,509.50')).toHaveLength(2);
+    // balanceToday (as of July 2, 2026): All transactions up to July 2
+    // Includes: tx-1 (3000), tx-2 (-120.5), tx-3 (-1000), tx-4 (150), tx-5 (30), tx-6 (500), tx-7 (-50), tx-8 (2500)
+    // = 3000 - 120.5 - 1000 + 150 + 30 + 500 - 50 + 2500 = 5009.5
+    // balanceForecast (as of end of June 2026): All transactions up to June 30
+    // Excludes tx-6 (500 on July 1)
+    // = 3000 - 120.5 - 1000 + 150 + 30 - 50 + 2500 = 4509.5
+    expect(screen.getByText('$5,009.50')).toBeInTheDocument(); // today's balance
+    expect(screen.getByText('$4,509.50')).toBeInTheDocument(); // forecasted end of month balance
   });
 
   it('passes properly structured daily and cumulative series data to the LineChart', async () => {
