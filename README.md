@@ -81,11 +81,57 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
 #### Linux (Manjaro/Arch)
 
-Install required system dependencies:
+Install required system dependencies (runtime **and** the headers/`.pc` files
+that `pkg-config` needs to link against them):
 
 ```bash
-sudo pacman -S webkit2gtk-4.1 libappindicator-gtk3 librsvg
+sudo pacman -S --needed webkit2gtk-4.1 libsoup3 librsvg pkgconf base-devel
 ```
+
+> `libappindicator-gtk3` is only needed if you enable a tray icon; the app
+> builds without it.
+
+##### Troubleshooting: `pkg-config` / `The system library ... was not found`
+
+The Rust crates behind Tauri (`soup3-sys`, `gdk-sys`, `webkit2gtk-sys`, ...)
+locate system libraries through `pkg-config`. Arch splits those `.pc` files
+across **two** directories:
+
+| Directory | Contains |
+|---|---|
+| `/usr/lib/pkgconfig` | `gdk-3.0.pc`, `x11.pc`, `xrender.pc`, `xft.pc`, `libsoup-3.0.pc`, ... |
+| `/usr/share/pkgconfig` | `xproto.pc`, `renderproto.pc`, `kbproto.pc`, `xextproto.pc`, `shared-mime-info.pc`, ... |
+
+The X protocol headers and shared-mime-info are architecture-independent, so
+they live in `/usr/share`. If `PKG_CONFIG_PATH` is set to a list that omits
+`/usr/share/pkgconfig`, the build fails with errors naming packages that
+**do not exist as installable packages** on Arch:
+
+```
+Package 'xproto', required by 'x11', not found
+Package 'shared-mime-info', required by 'gdk-pixbuf-2.0', not found
+```
+
+Those files ship inside `xorgproto` and `shared-mime-info`, which are already
+installed as dependencies. **Do not go hunting for a `-dev` package** — the
+error's `HINT:` line is misleading on Arch. The fix is the search path:
+
+```bash
+export PKG_CONFIG_PATH="/usr/lib/pkgconfig:/usr/share/pkgconfig:$PKG_CONFIG_PATH"
+```
+
+Verify before rebuilding (versions must resolve, not error):
+
+```bash
+pkg-config --modversion gdk-3.0 webkit2gtk-4.1 libsoup-3.0
+```
+
+**Known cause:** the Vulkan SDK (`VULKAN_SDK=/opt/vulkan/<version>/x86_64`)
+exports a `PKG_CONFIG_PATH` containing only its own directories, which
+*replaces* pkgconf's built-in defaults instead of extending them. If you have
+the Vulkan SDK installed, either append the two system directories above in
+your shell profile, or unset `PKG_CONFIG_PATH` for the build so pkgconf falls
+back to its defaults (which already include both).
 
 #### macOS
 

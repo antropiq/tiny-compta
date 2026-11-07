@@ -1,60 +1,38 @@
 # List of features to add & bug to fix
 
-## How this TODO file works
+## 62 - Categories & spending analysis
+Per-transaction categories or tags (food, transport, salary, etc.) with per-category limits and a pie/bar chart on the dashboard.
 
-Every TODO items that are done should be located at the bottom of this file.
-For example, once a TODO item as been implemented:
+## 63 - Bank sync
+Auto-detect and parse common bank CSV export formats. The CSV importer already supports `,` and `;` separators — extending it with known bank templates would make importing painless.
 
-1 - it's item number will be replaced by the world 'DONE'.
-    For example: "3 - do a new feature" <-> "DONE - do a new feature"
+## 64 - Multi-currency
+Per-account currency with conversion on the dashboard. Useful when tracking accounts in different currencies.
 
-2 - remaining TODO items placed after the one that is set to 'DONE' must be renumbered.
-    For example: "4 - do another feature" <-> "3 - do another feature"
----
+## 65 - Reminders / nudges
+"Last transaction was 3 days ago" — a gentle prompt to keep data fresh.
 
-## 1 - Recurring payments
+## 66 - Past months view
+Archive older months as a separate view so the current-month filter doesn't feel like a wall.
 
-In order to manage recurring payments we need to add an extra table to the current idb db schema named recurring.
+## 67 - Export to PDF
+A formatted monthly statement you can print or share.
 
-The relevant typescript types to manage this object are the following:
+## 68 - Recurring plan exceptions
+"Skip this month" or "delay by one week" toggle — handle months where a plan doesn't fire as expected.
 
-```typescript
-export type RecurringType = 'loan' | 'credit_card' | 'subscription' | 'other';
-export type StatusType = 'plan' | 'active' | 'completed' | 'paused' | 'cancelled';
-export type Recurring = {
-	id: string,
-	accountId: string,
-	label: string,
-    amount: number, // positive or negative but not zero!
-	recurringType : RecurringType,
-	startDate: string,
-	endDate?: string,
-	status: StatusType
-};
-```
+## 69 - Per-transaction notes
+Allow attaching free-text notes or a receipt field per transaction.
 
-> Note that endDate is optional. This can be the case when a recurring as an unknown ending date like monthly electricity bill.
+## 70 - Keyboard shortcuts
+Quick add / quick delete / quick apply — power users love them.
 
-We will also need to add a FK to the transaction table in order to link it eventually to a recurring item:
+## 71 - Recurring plan calendar
+A visual calendar showing when each plan fires each month.
 
-```typescript
-export type Transaction = {
-  id: string;
-  accountId: string;
-  recurringId?: string; // <- new
-  label: string;
-  description?: string;
-  amount: number;
-  dueDate: string;
-};
-```
+## 72 - Data versioning / restore
+Import a previous export to roll back to a known state.
 
-### Creating a recurring item
+## 73 - Mobile-friendly quick-add screen
+A compact "quick add" screen for phones — already responsive, but a guided flow would help.
 
-For this, we create a new RecurringEditor dialog component.
-
-# DONE SECTION GOES BELLOW
-
-DONE - Enhancement - transaction toolbar - left-container vertical viewport.
-DONE - Transaction list visible items
-DONE - Add a filter for transactions

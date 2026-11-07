@@ -28,3 +28,4 @@ coverage/
 *.pfx
 *.p12
 .env
+.nojae
